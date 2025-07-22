@@ -14,17 +14,17 @@ export class UserRepositoryImplementation implements UserRepository {
   }
 
   async create(user: User): Promise<User> {
-    const result = await sql`INSERT INTO users (name, email, password) VALUES (${user.username}, ${user.email}, ${user.password}) RETURNING *`;
+    const result = await sql`INSERT INTO users (username, email, password) VALUES (${user.username}, ${user.email}, ${user.password}) RETURNING *`;
     return result.rows[0] as User;
   }
 
   async findAll(): Promise<User[]> {
-    const result = await sql`SELECT name, email FROM users`;
+    const result = await sql`SELECT username, email FROM users`;
     return result.rows as User[];
   }
 
   async update(user: User): Promise<User> {
-    const result = await sql`UPDATE users SET name = ${user.username}, email = ${user.email}, password = ${user.password} WHERE id = ${user.id} RETURNING *`;
+    const result = await sql`UPDATE users SET username = ${user.username}, email = ${user.email}, password = ${user.password} WHERE id = ${user.id} RETURNING *`;
     return result.rows[0] as User;
   }
 

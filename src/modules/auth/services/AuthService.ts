@@ -21,7 +21,7 @@ export class AuthService {
       password: hashedPassword,
     }));
 
-    const {token, message} = await this.login(user.email , user.password as string)
+    const {token, message} = await this.login(user.email , password as string)
 
     return {token, message};
   }
@@ -34,6 +34,9 @@ export class AuthService {
     }
 
     const passwordIsValid = await bcrypt.compare(password, user.password as string);
+
+    console.log(password , user.password);
+    
     
     if (!passwordIsValid) {
       return {token: null, message: "Invalid password"};
