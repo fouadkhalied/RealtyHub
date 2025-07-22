@@ -1,33 +1,50 @@
-# Express.js on Vercel
+# Express.js on Vercel (Refactored)
 
-Simple Express.js + Vercel example that uses Vercel Postgres to add and display users in a table.
+## Features
+- Domain-Driven Design (DDD) architecture
+- PostgreSQL database connection
+- Sequelize ORM
+- TypeScript support
 
-## How to Use
+## Project Structure
 
-BE sure to create a Vercel Postgres database and add you environment variables to your `.env` file. You can find an example of the `.env` file in the `.env.example` file.
-
-You can choose from one of the following two methods to use this repository:
-
-### One-Click Deploy
-
-Deploy the example using [Vercel](https://vercel.com?utm_source=github&utm_medium=readme&utm_campaign=vercel-examples):
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/external?repository-url=https://github.com/vercel/examples/tree/main/solutions/express&project-name=express&repository-name=express)
-
-### Clone and Deploy
-
-```bash
-git clone https://github.com/vercel/examples/tree/main/solutions/express
+```
+src/
+  domain/
+    entities/
+    repositories/
+  application/
+    services/
+  infrastructure/
+    db/
+    orm/
+  presentation/
+    controllers/
 ```
 
-Install the Vercel CLI:
+## Setup
 
-```bash
-npm i -g vercel
-```
+1. **Install dependencies:**
+   ```sh
+   npm install
+   ```
 
-Then run the app at the root of the repository:
+2. **Configure environment variables:**
+   Create a `.env` file in the root directory:
+   ```env
+   DATABASE_URL=postgres://user:password@localhost:5432/dbname
+   ```
 
-```bash
-vercel dev
-```
+3. **Run migrations (if any):**
+   ```sh
+   npx sequelize-cli db:migrate
+   ```
+
+4. **Start the development server:**
+   ```sh
+   npx ts-node src/presentation/controllers/server.ts
+   ```
+
+## Notes
+- Make sure PostgreSQL is running and accessible.
+- Adjust the `DATABASE_URL` as needed for your environment.
