@@ -22,7 +22,7 @@ export class UserModel extends Model<UserAttributes, UserCreationAttributes> imp
 UserModel.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },

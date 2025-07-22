@@ -13,6 +13,7 @@ if (!databaseUrl) {
 export const sequelize = new Sequelize(databaseUrl, {
   dialect: 'postgres',
   logging: false,
+  ssl: true,
   dialectOptions: {
     ssl: {
       require: true,
