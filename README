@@ -1,0 +1,339 @@
+# User Management API
+
+A RESTful API for managing users with authentication capabilities, built with Express.js and PostgreSQL.
+
+## Table of Contents
+
+- [Getting Started](#getting-started)
+- [Base URL](#base-url)
+- [Authentication](#authentication)
+- [Response Format](#response-format)
+- [API Endpoints](#api-endpoints)
+- [Error Handling](#error-handling)
+- [Status Codes](#status-codes)
+- [Examples](#examples)
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v14 or higher)
+- PostgreSQL database
+- npm or yarn package manager
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Configure your database connection
+4. Start the server: `npm start`
+
+## Base URL
+
+```
+http://localhost:3000/api
+```
+
+## Authentication
+
+Currently, the API uses basic email/password authentication. JWT token implementation is planned for future versions.
+
+## Response Format
+
+All API responses follow a consistent JSON format:
+
+```json
+{
+  "success": boolean,
+  "message": "Descriptive message",
+  "data": {} // Additional data when applicable
+}
+```
+
+## API Endpoints
+
+### Health Check
+
+#### Check API Health
+- **URL:** `/health`
+- **Method:** `GET`
+- **Description:** Check if the API and database connection are working
+- **Response:**
+```json
+{
+  "status": "ok",
+  "db": "connected"
+}
+```
+
+### General Information
+
+#### Get API Information
+- **URL:** `/`
+- **Method:** `GET`
+- **Description:** Returns API information and available endpoints
+- **Response:**
+```json
+{
+  "message": "Welcome to the API",
+  "version": "1.0.0",
+  "endpoints": [
+    "GET /api/health - Health check",
+    "GET /api/about - About information",
+    "POST /api/users - Create user",
+    "GET /api/users - Get all users",
+    "POST /api/auth/login - User login",
+    "POST /api/auth/signup - User signup"
+  ]
+}
+```
+
+#### Get About Information
+- **URL:** `/about`
+- **Method:** `GET`
+- **Description:** Returns information about the API
+- **Response:**
+```json
+{
+  "name": "User Management API",
+  "description": "A simple API for managing users",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "features": [
+    "User registration",
+    "User authentication", 
+    "User management",
+    "Health monitoring"
+  ]
+}
+```
+
+### Authentication
+
+#### User Signup
+- **URL:** `/auth/signup`
+- **Method:** `POST`
+- **Description:** Register a new user account
+- **Request Body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "securepassword"
+}
+```
+- **Success Response (201):**
+```json
+{
+  "success": true,
+  "message": "User registered successfully",
+  "user": {
+    "name": "John Doe",
+    "email": "john@example.com"
+  }
+}
+```
+
+#### User Login
+- **URL:** `/auth/login`
+- **Method:** `POST`
+- **Description:** Authenticate a user
+- **Request Body:**
+```json
+{
+  "email": "john@example.com",
+  "password": "securepassword"
+}
+```
+- **Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "user": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com"
+  }
+}
+```
+
+### User Management
+
+#### Get All Users
+- **URL:** `/users`
+- **Method:** `GET`
+- **Description:** Retrieve all users
+- **Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Users retrieved successfully",
+  "count": 2,
+  "users": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com"
+    },
+    {
+      "id": 2,
+      "name": "Jane Smith",
+      "email": "jane@example.com"
+    }
+  ]
+}
+```
+
+
+
+#### Create User
+- **URL:** `/users`
+- **Method:** `POST`
+- **Description:** Create a new user
+- **Request Body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com"
+}
+```
+- **Success Response (201):**
+```json
+{
+  "success": true,
+  "message": "User created successfully",
+  "user": {
+    "name": "John Doe",
+    "email": "john@example.com"
+  }
+}
+```
+
+
+
+## Error Handling
+
+### Validation Errors (400)
+```json
+{
+  "success": false,
+  "message": "Name and email are required",
+  "missing_fields": {
+    "name": false,
+    "email": true
+  }
+}
+```
+
+### Authentication Errors (401)
+```json
+{
+  "success": false,
+  "message": "Invalid email or password"
+}
+```
+
+### Not Found Errors (404)
+```json
+{
+  "success": false,
+  "message": "User not found"
+}
+```
+
+### Server Errors (500)
+```json
+{
+  "success": false,
+  "message": "Error creating user",
+  "error": "Database connection failed"
+}
+```
+
+## Status Codes
+
+- **200** - OK: Request successful
+- **201** - Created: Resource created successfully
+- **400** - Bad Request: Invalid request data
+- **401** - Unauthorized: Authentication failed
+- **404** - Not Found: Resource not found
+- **500** - Internal Server Error: Server error
+
+## Examples
+
+### Using cURL
+
+#### Get all users
+```bash
+curl -X GET http://localhost:3000/api/users
+```
+
+#### Create a new user
+```bash
+curl -X POST http://localhost:3000/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"name": "John Doe", "email": "john@example.com"}'
+```
+
+#### User signup
+```bash
+curl -X POST http://localhost:3000/api/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"name": "John Doe", "email": "john@example.com", "password": "securepassword"}'
+```
+
+#### User login
+```bash
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "john@example.com", "password": "securepassword"}'
+```
+
+### Using JavaScript (fetch)
+
+#### Get all users
+```javascript
+fetch('http://localhost:3000/api/users')
+  .then(response => response.json())
+  .then(data => console.log(data));
+```
+
+#### Create a new user
+```javascript
+fetch('http://localhost:3000/api/users', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    name: 'John Doe',
+    email: 'john@example.com'
+  })
+})
+.then(response => response.json())
+.then(data => console.log(data));
+```
+
+## TODO / Future Enhancements
+
+- [ ] Implement JWT token authentication
+- [ ] Add password hashing (bcrypt)
+- [ ] Implement user update functionality (PUT /users/:id)
+- [ ] Implement user deletion functionality (DELETE /users/:id)
+- [ ] Implement get user by ID functionality (GET /users/:id)
+- [ ] Add input validation middleware
+- [ ] Add rate limiting
+- [ ] Add API versioning
+- [ ] Add pagination for user lists
+- [ ] Add user roles and permissions
+- [ ] Add email verification
+- [ ] Add password reset functionality
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
