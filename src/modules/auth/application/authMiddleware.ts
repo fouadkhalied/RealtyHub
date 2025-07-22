@@ -7,11 +7,9 @@ export interface AuthenticatedRequest extends Request {
 
 export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const token = req.headers.authorization?.split(' ')[1];
-
   if (!token) {
     return res.status(401).json({ message: 'Authentication token is required.' });
   }
-
   try {
     if (!process.env.JWT_SECRET) {
       throw new Error('JWT_SECRET is not set in environment variables');
