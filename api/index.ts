@@ -23,7 +23,7 @@ export default async (req: NowRequest, res: NowResponse) => {
     await sequelize.sync();
 
     if (req.url === '/health' && req.method === 'GET') {
-      return res.status(200).json({ status: 'ok', db: 'connected' });
+      return res.status(200).json({ status: 'ok', db: 'connected'});
     }
     if (req.url === '/' && req.method === 'GET') {
       return serveHtml('home.htm', res);
