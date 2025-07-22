@@ -1,25 +1,20 @@
-# Express.js on Vercel (Refactored)
+# Express.js on Vercel (Simplified)
 
 ## Features
-- Domain-Driven Design (DDD) architecture
-- PostgreSQL database connection
-- Sequelize ORM
+- Express.js serverless functions on Vercel
+- Direct PostgreSQL database connection using `@vercel/postgres`
 - TypeScript support
 
 ## Project Structure
 
 ```
+api/
+  index.ts      # Main serverless function handler
 src/
-  domain/
-    entities/
-    repositories/
   application/
-    services/
-  infrastructure/
-    db/
-    orm/
-  presentation/
-    controllers/
+    services/   # Business logic
+  domain/
+    entities/   # Data structures
 ```
 
 ## Setup
@@ -29,22 +24,9 @@ src/
    npm install
    ```
 
-2. **Configure environment variables:**
-   Create a `.env` file in the root directory:
-   ```env
-   DATABASE_URL=postgres://user:password@localhost:5432/dbname
-   ```
-
-3. **Run migrations (if any):**
-   ```sh
-   npx sequelize-cli db:migrate
-   ```
-
-4. **Start the development server:**
-   ```sh
-   npx ts-node src/presentation/controllers/server.ts
-   ```
+2. **Configure environment variables in Vercel:**
+   Create a `DATABASE_URL` environment variable in your Vercel project settings with the connection string from your Railway "Public URL".
 
 ## Notes
-- Make sure PostgreSQL is running and accessible.
-- Adjust the `DATABASE_URL` as needed for your environment.
+- This project is optimized to run on Vercel and uses the `@vercel/postgres` library for database access.
+- Ensure your Railway database is accessible from public connections.

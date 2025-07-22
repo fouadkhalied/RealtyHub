@@ -1,28 +1,34 @@
-import { UserRepository } from '../../domain/repositories/UserRepository';
-import { User } from '../../domain/entities/User';
+import { sql } from '@vercel/postgres';
+import { User, UserProps } from '../../domain/entities/User';
 
 export class UserService {
-  constructor(private userRepository: UserRepository) {}
-
   async getUserById(id: number): Promise<User | null> {
-    return this.userRepository.findById(id);
+    const { rows } = await sql`SELECT * FROM users WHERE id = ${id};`;
+    if (rows.length === 0) {
+      return null;
+    }
+    return new User(rows[0] as UserProps);
   }
 
   async getAllUsers(): Promise<User[]> {
-    return this.userRepository.findAll();
+    const { rows } = await sql`SELECT * FROM users;`;
+    return rows.map(row => new User(row as UserProps));
   }
 
   async createUser(name: string, email: string): Promise<User> {
-    const user = new User({ name, email });
-    return this.userRepository.create(user);
+    const { rows } = await sql`INSERT INTO users (name, email) VALUES (${name}, ${email}) RETURNING *;`;
+    return new User(rows[0] as UserProps);
   }
 
   async updateUser(id: number, name: string, email: string): Promise<User> {
-    const user = new User({ id, name, email });
-    return this.userRepository.update(user);
+    const { rows } = await sql`UPDATE users SET name = ${name}, email = ${email} WHERE id = ${id} RETURNING *;`;
+    if (rows.length === 0) {
+      throw new Error('User not found');
+    }
+    return new User(rows[0] as UserProps);
   }
 
   async deleteUser(id: number): Promise<void> {
-    return this.userRepository.delete(id);
+    await sql`DELETE FROM users WHERE id = ${id};`;
   }
 } 

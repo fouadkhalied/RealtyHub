@@ -3,31 +3,20 @@ import bodyParser from 'body-parser';
 import path from 'path';
 import fs from 'fs';
 import { UserService } from '../src/application/services/UserService';
-import { UserRepositoryImpl } from '../src/infrastructure/orm/UserRepositoryImpl';
-import { sequelize } from '../src/infrastructure/db/connection';
+import { sql } from '@vercel/postgres';
 
 const app = express();
-const userService = new UserService(new UserRepositoryImpl());
+const userService = new UserService();
 
 // Middlewares
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// DB Connection
-app.use(async (req, res, next) => {
-  try {
-    await sequelize.authenticate();
-    await sequelize.sync();
-    next();
-  } catch (error) {
-    res.status(500).send('Database connection error');
-  }
-});
-
 // Routes
 app.get('/api/health', async (req, res) => {
   try {
-    await sequelize.authenticate();
+    // A simple query to check the connection
+    await sql`SELECT 1;`;
     res.status(200).json({ status: 'ok', db: 'connected' });
   } catch (error) {
     res.status(500).json({ status: 'error', db: 'disconnected', details: (error as Error).message });
