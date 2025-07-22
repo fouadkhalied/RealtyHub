@@ -4,7 +4,7 @@ import 'pg';
 
 dotenv.config();
 
-const databaseUrl = process.env.DATABASE_URL as string;
+const databaseUrl = process.env.POSTGRES_URL as string;
 
 if (!databaseUrl) {
   throw new Error('DATABASE_URL is not set in environment variables');
