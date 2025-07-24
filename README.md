@@ -1,184 +1,74 @@
-Real Estate API
-This is a Node.js Express API for managing user authentication and property-related operations in an Egyptian real estate market application. The API provides endpoints for user signup, login, property creation, and retrieving available projects, with role-based access control.
-Table of Contents
+# Real Estate API Documentation
 
-Prerequisites
-API Endpoints
-Authentication
-Properties
+## Overview
+A comprehensive REST API for managing real estate properties with multi-language support (English/Arabic).
 
+## Base URL
+```
+http://localhost:3000/api
+```
 
-Authentication Middleware
-Error Handling
-Dependencies
-Running the Application
+## Authentication
+The API uses JWT (JSON Web Token) for authentication. Include the token in the Authorization header:
+```
+Authorization: Bearer <your-jwt-token>
+```
 
-Prerequisites
+## User Roles
+- **USER**: Can create properties and access basic features
+- **ADMIN**: Can create customer service accounts and access all features
+- **CustomerService**: Administrative access for customer support
 
-Node.js (v16 or higher)
-PostgreSQL database
-TypeScript (for type safety)
-Environment variables for configuration (e.g., database connection, JWT secret)
+---
 
-Install Dependencies:
-npm install
+## API Endpoints
 
+### Authentication
 
-Configure Environment Variables:Create a .env file in the root directory and add necessary configurations:
-POSTGRES_URL=postgres://default:VqniRQFd3au6@ep-lingering-credit-a4z4l8il-pooler.us-east-1.aws.neon.tech/verceldb?sslmode=require
-JWT_SECRET=fouad
-PORT=3000
+| Method | Endpoint | Security | Parameters | Description |
+|--------|----------|----------|------------|-------------|
+| `POST` | `/auth/signup/user` | Public | - | Register a new user account |
+| `POST` | `/auth/signup/customerService` | Admin | - | Create a customer service account |
+| `POST` | `/auth/login` | Public | - | Authenticate user and receive JWT token |
 
+### Properties
 
-Set Up the Database:
+| Method | Endpoint | Security | Parameters | Description |
+|--------|----------|----------|------------|-------------|
+| `POST` | `/properties/create` | User | - | Create a new property listing |
+| `GET` | `/properties/:id` | Public | `id` (path) - Property ID | Retrieve a specific property with localized information |
+| `GET` | `/properties` | Public | `page` (query, optional) - Page number<br>`limit` (query, optional) - Items per page | Get paginated list of properties |
+| `GET` | `/properties/getAvailableProjects` | Public | - | Retrieve list of available projects |
+| `GET` | `/properties/getPropertyTypes` | Public | - | Retrieve available property types |
 
-Ensure PostgreSQL is running.
-Create a database and apply the schema (see provided SQL schema for tables like users, properties, projects, etc.).
-Optionally, seed the database with mock data.
+---
 
+## Localization Features
 
-Compile and Run:
-npm run dev
+The API supports English and Arabic content with automatic localization for:
+- Property Features (Pool → حمام سباحة)
+- Listing Types (sale/rent → بيع/إيجار)  
+- Property Types (Villa/Apartment → فيلا/شقة)
+- Status Values (active/inactive → نشط/غير نشط)
 
+All property responses include both original and localized versions with `_en` and `_ar` suffixes.
 
+---
 
-API Endpoints
-Authentication
-POST /api/auth/signup/user
+## Pagination
 
-Description: Registers a new user with the USER role.
-Body:{
-  "username": "string",
-  "email": "string",
-  "password": "string"
-}
+For `/properties` endpoint:
+- Default: `page=1`, `limit=10`
+- Maximum limit: 100 items per page
+- Response includes pagination metadata with `hasNext` and `hasPrevious` flags
 
+## Error Handling
 
-Response:
-201: { message: "User created successfully", result: { userId: number, token: string } }
-400: Missing required fields or invalid data
-500: Server error
-
-
-
-POST /api/auth/signup/customerService
-
-Description: Registers a new user with the CustomerService role (requires ADMIN role authentication).
-Headers: Authorization: Bearer <admin_token>
-Body:{
-  "username": "string",
-  "email": "string",
-  "password": "string"
-}
-
-
-Response:
-201: { message: "User created successfully", result: { userId: number, token: string } }
-400: Missing required fields or invalid data
-403: Unauthorized (non-admin user)
-500: Server error
-
-
-
-POST /api/auth/login
-
-Description: Authenticates a user and returns a JWT token.
-Body:{
-  "email": "string",
-  "password": "string"
-}
-
-
-Response:
-200: { token: string }
-401: Invalid credentials
-400: Missing required fields
-500: Server error
-
-
-
-Properties
-POST /api/properties/create
-
-Description: Creates a new property listing (requires USER role authentication).
-Headers: Authorization: Bearer <user_token>
-Body (example CreatePropertyRequest):{
-  "projectId": 8,
-  "propertyTypeId": 1,
-  "priceAmount": 3500000.00,
-  "bedrooms": 3,
-  "bathrooms": 2,
-  "areaSqm": 150.5,
-  "listingType": "sale",
-  "coverImageUrl": "https://example.com/images/cairo_gate_apt.jpg",
-  "status": "active",
-  "available_from": "2025-08-01",
-  "titleEn": "Spacious 3-Bedroom Apartment in Cairo Gate",
-  "titleAr": "شقة فسيحة بثلاث غرف نوم في كايرو جيت",
-  "descriptionEn": "Modern apartment with city views in Sheikh Zayed.",
-  "descriptionAr": "شقة حديثة بإطلالات على المدينة في الشيخ زايد",
-  "addressEn": "Cairo Gate, Sheikh Zayed, Giza",
-  "addressAr": "كايرو جيت، الشيخ زايد، الجيزة"
-}
-
-
-Response:
-201: { id: number }
-403: Unauthorized (missing or invalid user)
-500: Server error
-
-
-
-GET /api/properties/getAvailableProjects
-
-Description: Retrieves a list of available projects (requires USER role authentication).
-Headers: Authorization: Bearer <user_token>
-Response:
-201: Array of project objects
-403: Unauthorized
-500: Server error
-
-
-
-Authentication Middleware
-
-The AuthMiddleware ensures that protected endpoints (/api/properties/* and /api/auth/signup/customerService) require a valid JWT token.
-For /api/auth/signup/customerService, the middleware checks for the ADMIN role.
-For /api/properties/*, the middleware ensures the user has the USER role.
-
-Error Handling
-
-400: Bad request (e.g., missing required fields).
-401: Unauthorized (invalid credentials during login).
-403: Forbidden (invalid or missing token, or insufficient role permissions).
-500: Internal server error (unexpected issues).
-
-Dependencies
-
-express: Web framework for Node.js
-body-parser: Middleware for parsing JSON request bodies
-Custom modules:
-AuthService: Handles signup and login logic
-PropertyService: Manages property creation and project retrieval
-UserRepositoryImplementation: Interacts with the users table
-PropertiesRepositoryImp: Interacts with the properties and projects tables
-AuthMiddleware: JWT-based authentication and role-based authorization
-CreatePropertyRequest: DTO for property creation
-UserRole: Enum for user roles (USER, CustomerService, ADMIN)
-
-
-
-Running the Application
-
-Ensure the database is set up and seeded (if needed).
-Start the server:npm start
-
-
-The API will be available at http://localhost:3000 (or the configured PORT).
-
-Notes
-
-The API assumes a PostgreSQL database with tables as defined in the provided schema (e.g., users, properties, projects).
-Ensure the listing_type values in the properties table match the database constraint (sale, rent, lease).
-JWT tokens are used for authentication; store them securely on the client side.
-For production, configure HTTPS and additional security measures.
+Standard HTTP status codes:
+- **200**: Success
+- **201**: Created  
+- **400**: Bad Request
+- **401**: Unauthorized
+- **403**: Forbidden
+- **404**: Not Found
+- **500**: Internal Server Error
