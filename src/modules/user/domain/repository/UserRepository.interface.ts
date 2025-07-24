@@ -1,6 +1,6 @@
 import { User } from '../entites/User';
 
-export interface UserRepository {
+export interface UserRepositoryInterface {
   findById(id: number): Promise<User | null>;
   findAll(): Promise<User[]>;
   create(user: User): Promise<User>;

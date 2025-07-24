@@ -1,8 +1,8 @@
 import { User } from "../domain/entites/User";
 import { sql } from "@vercel/postgres";
-import { UserRepository } from "../domain/repository/UserRepository.interface";
+import { UserRepositoryInterface } from "../domain/repository/UserRepository.interface";
 
-export class UserRepositoryImplementation implements UserRepository {
+export class UserRepositoryImplementation implements UserRepositoryInterface {
   async findById(id: number): Promise<User | null> {
     const result = await sql`SELECT * FROM users WHERE id = ${id}`;
     return result.rows[0] as User;
@@ -14,7 +14,7 @@ export class UserRepositoryImplementation implements UserRepository {
   }
 
   async create(user: User): Promise<User> {
-    const result = await sql`INSERT INTO users (username, email, password) VALUES (${user.username}, ${user.email}, ${user.password}) RETURNING *`;
+    const result = await sql`INSERT INTO users (username, email, password, role) VALUES (${user.username}, ${user.email}, ${user.password}, ${user.role}) RETURNING *`;
     return result.rows[0] as User;
   }
 
