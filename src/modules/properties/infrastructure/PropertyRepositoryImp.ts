@@ -4,7 +4,7 @@ import { Property } from "../prestentaion/dto/property.dto";
 import { 
   DeveloperInput, 
   LocationInput, 
-  ProjectInput, 
+  ProjectWithDeveloperAndLocation, 
   PropertyTypeInput,
   FeatureInput,
   ActionInput,
@@ -59,69 +59,15 @@ export class PropertiesRepositoryImp implements PropertiesRepositoryInterface {
   
     return result.rows[0].id as number;
   }
-  
 
-  async getLocations(): Promise<LocationInput[] | null> {
+  async getProjects(): Promise<ProjectWithDeveloperAndLocation[] | null> {
     try {
-      const query = `
-        SELECT id, country, governorate, area, district
-        FROM locations
-        ORDER BY country, governorate, area, district
-      `;
-      
-      const result = await this.executeQuery(query);
-      
-      if (!result || result.length === 0) {
-        return null;
-      }
-
-      return result.map((row: any) => ({
-        id: row.id,
-        country: row.country,
-        governorate: row.governorate,
-        area: row.area,
-        district: row.district
-      }));
-
-    } catch (error:any) {
-      throw new Error(`Failed to get locations: ${error.message}`);
-    }
-  }
-
-  async getDevolpers(): Promise<DeveloperInput[] | null> {
-    try {
-      const query = `
-        SELECT id, name, created_at
-        FROM developers
-        ORDER BY name
-      `;
-      
-      const result = await this.executeQuery(query);
-      
-      if (!result || result.length === 0) {
-        return null;
-      }
-
-      return result.map((row: any) => ({
-        id: row.id,
-        name: row.name,
-        createdAt: row.created_at
-      }));
-
-    } catch (error:any) {
-      throw new Error(`Failed to get developers: ${error.message}`);
-    }
-  }
-
-  async getProjects(): Promise<ProjectInput[] | null> {
-    try {
-      const query = `
+      const result = await sql`
         SELECT 
           p.id, 
           p.name, 
           p.developer_id,
           p.location_id,
-          p.created_at,
           d.name as developer_name,
           l.country, l.governorate, l.area, l.district
         FROM projects p
@@ -129,21 +75,17 @@ export class PropertiesRepositoryImp implements PropertiesRepositoryInterface {
         LEFT JOIN locations l ON p.location_id = l.id
         ORDER BY p.name
       `;
-      
-      const result = await this.executeQuery(query);
-      
-      if (!result || result.length === 0) {
-        return null;
-      }
 
-      return result.map((row: any) => ({
+      return result.rows.map((row: any) => ({
         id: row.id,
         name: row.name,
-        developerId: row.developer_id,
-        locationId: row.location_id,
-        developerName: row.developer_name,
-        location: `${row.district}, ${row.area}, ${row.governorate}`,
-        createdAt: row.created_at
+        developer_id: row.developer_id,
+        location_id: row.location_id,
+        developer_name: row.developer_name,
+        country: row.country,
+        governorate: row.governorate,
+        area: row.area,
+        district: row.district,
       }));
 
     } catch (error:any) {

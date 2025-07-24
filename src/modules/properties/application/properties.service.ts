@@ -5,8 +5,7 @@ import { CreatePropertyRequest } from "../prestentaion/dto/CreatePropertyRequest
 
 export class PropertyService {
   constructor(
-    private readonly propertyRepository: PropertiesRepositoryImp
-  ) {}
+    private readonly propertyRepository: PropertiesRepositoryImp) {}
 
   async create(props: CreatePropertyRequest, userId: number) {
     try { 
@@ -20,9 +19,6 @@ export class PropertyService {
       if (error) {
         throw new Error(error.details[0].message)
       }
-
-      
-
       // optionally convert to entity here before saving
       await this.propertyRepository.create(propertyToCreate);
 
@@ -31,6 +27,15 @@ export class PropertyService {
       // Better error handling
       console.error("Error creating property:", error);
       throw new Error("Failed to create property." + error);
+    }
+  }
+
+  async getProjects() {
+    try {
+      return this.propertyRepository.getProjects()
+    } catch (error) {
+      console.error("Error in retriveing projects:", error);
+      throw new Error("Failed to retrive projects." + error);
     }
   }
 }

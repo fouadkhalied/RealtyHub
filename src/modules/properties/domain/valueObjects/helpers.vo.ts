@@ -28,11 +28,18 @@ export interface DeveloperInput {
     subtypeAr?: string;
   }
   
-  export interface ProjectInput {
-    id?: number;
-    name?: string;
-    nameAr?: string;
-    developerId?: number; // Will be resolved from developer input
+  export interface ProjectWithDeveloperAndLocation {
+    id: number;
+    name: string;
+    developer_id: number | null;
+    location_id: number | null;
+  
+    developer_name: string | null;
+  
+    country: string | null;
+    governorate: string | null;
+    area: string | null;
+    district: string | null;
   }
   
   export interface FeatureInput {

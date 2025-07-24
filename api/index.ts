@@ -85,5 +85,18 @@ app.post('/api/properties/create', AuthMiddleware(UserRole.USER), async (req, re
 });
 
 
+app.get('/api/properties/getAvailableProjects', AuthMiddleware(UserRole.USER), async (req, res) => {
+  try {
+
+    const result = await propertyService.getProjects();
+
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error creating property',
+      details: (error as Error).message,
+    });
+  }
+});
 
 export default app; 
