@@ -1,6 +1,3 @@
-import { ListingType_EN } from "../../domain/enum/listingType.enum";
-import { STATE_EN } from "../../domain/enum/state.enum";
-
 export interface CreatePropertyRequest {
   mlsId: string;
   userId: number;
@@ -11,8 +8,8 @@ export interface CreatePropertyRequest {
   bathrooms: number;
   areaSqm: number;
 
-  listingType: ListingType_EN;
-  state: STATE_EN;
+  listingType: string;
+  status: string;
 
   coverImageUrl: string;
   available_from: string;

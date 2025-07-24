@@ -2,18 +2,17 @@ import { PropertiesRepositoryInterface } from "../domain/repository/repository.i
 import { CreatePropertyRequest } from "../prestentaion/dto/CreatePropertyRequest.dto";
 import { Property } from "../prestentaion/dto/property.dto";
 import { 
-  DeveloperInput, 
-  LocationInput, 
   ProjectWithDeveloperAndLocation, 
   PropertyTypeInput,
   FeatureInput,
   ActionInput,
   ContactInput 
 } from "../domain/valueObjects/helpers.vo";
-import { MLSIDValueObject } from "../domain/valueObjects/mls-ID.vo";
 import { sql } from "@vercel/postgres";
+import { PropertyQueryResult } from "../prestentaion/dto/GetPropertyResponse.dto";
+import { PaginationParams } from "../domain/valueObjects/pagination.vo";
 
-export class PropertiesRepositoryImp implements PropertiesRepositoryInterface {
+export class PropertiesRepositoryImplementation implements PropertiesRepositoryInterface {
   
   async create(data: CreatePropertyRequest): Promise<number> {
     const result = await sql`
@@ -41,7 +40,7 @@ export class PropertiesRepositoryImp implements PropertiesRepositoryInterface {
         ${data.bathrooms},
         ${data.areaSqm},
         ${data.listingType},
-        ${data.state},
+        ${data.status},
         ${data.coverImageUrl},
         ${data.available_from},
         ${data.propertyTypeId},
@@ -77,7 +76,7 @@ export class PropertiesRepositoryImp implements PropertiesRepositoryInterface {
       `;
 
       return result.rows.map((row: any) => ({
-        id: row.id,
+        project_id: row.id,
         name: row.name,
         developer_id: row.developer_id,
         location_id: row.location_id,
@@ -95,108 +94,225 @@ export class PropertiesRepositoryImp implements PropertiesRepositoryInterface {
 
   async getPropertyType(): Promise<PropertyTypeInput[] | null> {
     try {
-      const query = `
+      const result = await sql`
         SELECT id, category, subtype
         FROM property_types
         ORDER BY category, subtype
       `;
-      
-      const result = await this.executeQuery(query);
-      
-      if (!result || result.length === 0) {
-        return null;
-      }
 
-      return result.map((row: any) => ({
-        id: row.id,
-        category: row.category,
-        subtype: row.subtype
-      }));
-
+      return result.rows
     } catch (error:any) {
       throw new Error(`Failed to get property types: ${error.message}`);
     }
   }
 
-  async findById(id: string): Promise<Property | null> {
+  async findById(id: number): Promise<PropertyQueryResult | null> {
     try {
-      const query = `
+      const result = await sql`
         SELECT 
-          p.*,
-          d.name as developer_name,
-          l.country, l.governorate, l.area, l.district, l.latitude, l.longitude,
-          pt.category, pt.subtype,
-          pr.name as project_name
-        FROM properties p
-        LEFT JOIN developers d ON p.developer_id = d.id
-        LEFT JOIN locations l ON p.location_id = l.id
-        LEFT JOIN property_types pt ON p.property_type_id = pt.id
-        LEFT JOIN projects pr ON p.project_id = pr.id
-        WHERE p.id = $1
+  p.price_amount,
+  p.bedrooms,
+  p.bathrooms,
+  p.area_sqm,
+  p.listing_type,
+  p.coverimageurl,
+  p.is_approved,
+  p.status,
+  p.available_from,
+
+  -- Grouped additional info
+    json_build_object(
+    'en', json_build_object(
+      'title', p.title_en,
+      'address', p.address_en,
+      'description', p.description_en
+    ),
+    'ar', json_build_object(
+      'title', p.title_ar,
+      'address', p.address_ar,
+      'description', p.description_ar
+    )
+  ) AS additional_information,
+
+  -- Project object (no id)
+  json_build_object(
+    'name', pr.name
+  ) AS project,
+
+  -- Developer object (no id)
+  json_build_object(
+    'name', d.name
+  ) AS developer,
+
+  -- Location object (no id)
+  json_build_object(
+    'country', l.country,
+    'governorate', l.governorate,
+    'area', l.area,
+    'district', l.district
+  ) AS location,
+
+  -- Property type object (no id)
+  json_build_object(
+    'category', pt.category,
+    'subtype', pt.subtype
+  ) AS property_type,
+
+  -- Contact object (no id)
+  json_build_object(
+    'name', c.name,
+    'phone', c.phone,
+    'email', c.email,
+    'contact_type', c.contact_type
+  ) AS contact,
+
+  -- Features array
+  COALESCE(json_agg(DISTINCT jsonb_build_object(
+    'name', f.name,
+    'icon', f.icon
+  )) FILTER (WHERE f.id IS NOT NULL), '[]') AS features,
+
+  -- Actions array
+  COALESCE(json_agg(DISTINCT jsonb_build_object(
+    'name', a.name
+  )) FILTER (WHERE a.id IS NOT NULL), '[]') AS actions
+
+FROM properties p
+LEFT JOIN projects pr ON p.project_id = pr.id
+LEFT JOIN developers d ON pr.developer_id = d.id
+LEFT JOIN locations l ON pr.location_id = l.id
+LEFT JOIN property_types pt ON p.property_type_id = pt.id
+LEFT JOIN contacts c ON p.user_id = c.id AND p.id = c.property_id
+LEFT JOIN property_features pf ON p.id = pf.property_id
+LEFT JOIN features f ON pf.feature_id = f.id
+LEFT JOIN property_actions pa ON p.id = pa.property_id
+LEFT JOIN actions a ON pa.action_id = a.id
+WHERE p.id = ${id}
+GROUP BY 
+  p.id, pr.name, d.name, l.country, l.governorate, l.area, l.district,
+  pt.category, pt.subtype, c.name, c.phone, c.email, c.contact_type;
+
       `;
-      
-      const result = await this.executeQuery(query, [id]);
-      
-      if (!result || result.length === 0) {
-        return null;
-      }
 
-      const row = result[0];
-      
-      // Get features, actions, and contacts
-      const [features, actions, contacts] = await Promise.all([
-        this.getPropertyFeatures(id),
-        this.getPropertyActions(id),
-        this.getPropertyContacts(id)
-      ]);
-
-      return this.mapRowToProperty(row, features, actions, contacts);
+      return result.rows[0] as PropertyQueryResult
 
     } catch (error:any) {
       throw new Error(`Failed to find property by ID: ${error.message}`);
     }
   }
 
-  async findByMlsId(mlsId: string): Promise<Property | null> {
+  async findAll(params: PaginationParams): Promise<{ properties: PropertyQueryResult[], totalCount: number }> {
     try {
-      const query = `
-        SELECT 
-          p.*,
-          d.name as developer_name,
-          l.country, l.governorate, l.area, l.district, l.latitude, l.longitude,
-          pt.category, pt.subtype,
-          pr.name as project_name
+      const { page, limit } = params;
+      const offset = (page - 1) * limit;
+
+      // Get total count
+      const countResult = await sql`
+        SELECT COUNT(DISTINCT p.id) as total
         FROM properties p
-        LEFT JOIN developers d ON p.developer_id = d.id
-        LEFT JOIN locations l ON p.location_id = l.id
-        LEFT JOIN property_types pt ON p.property_type_id = pt.id
-        LEFT JOIN projects pr ON p.project_id = pr.id
-        WHERE p.mls_id = $1
       `;
-      
-      const result = await this.executeQuery(query, [mlsId]);
-      
-      if (!result || result.length === 0) {
-        return null;
+
+      const totalCount = parseInt(countResult.rows[0].total);
+
+      // Get paginated properties using the same query structure as findById
+      const result = await sql`
+        SELECT 
+          p.price_amount,
+          p.bedrooms,
+          p.bathrooms,
+          p.area_sqm,
+          p.listing_type,
+          p.coverimageurl,
+          p.is_approved,
+          p.status,
+          p.available_from,
+
+          -- Grouped additional info
+          json_build_object(
+            'en', json_build_object(
+              'title', p.title_en,
+              'address', p.address_en,
+              'description', p.description_en
+            ),
+            'ar', json_build_object(
+              'title', p.title_ar,
+              'address', p.address_ar,
+              'description', p.description_ar
+            )
+          ) AS additional_information,
+
+          -- Project object (no id)
+          json_build_object(
+            'name', pr.name
+          ) AS project,
+
+          -- Developer object (no id)
+          json_build_object(
+            'name', d.name
+          ) AS developer,
+
+          -- Location object (no id)
+          json_build_object(
+            'country', l.country,
+            'governorate', l.governorate,
+            'area', l.area,
+            'district', l.district
+          ) AS location,
+
+          -- Property type object (no id)
+          json_build_object(
+            'category', pt.category,
+            'subtype', pt.subtype
+          ) AS property_type,
+
+          -- Contact object (no id)
+          json_build_object(
+            'name', c.name,
+            'phone', c.phone,
+            'email', c.email,
+            'contact_type', c.contact_type
+          ) AS contact,
+
+          -- Features array
+          COALESCE(json_agg(DISTINCT jsonb_build_object(
+            'name', f.name,
+            'icon', f.icon
+          )) FILTER (WHERE f.id IS NOT NULL), '[]') AS features,
+
+          -- Actions array
+          COALESCE(json_agg(DISTINCT jsonb_build_object(
+            'name', a.name
+          )) FILTER (WHERE a.id IS NOT NULL), '[]') AS actions
+
+        FROM properties p
+        LEFT JOIN projects pr ON p.project_id = pr.id
+        LEFT JOIN developers d ON pr.developer_id = d.id
+        LEFT JOIN locations l ON pr.location_id = l.id
+        LEFT JOIN property_types pt ON p.property_type_id = pt.id
+        LEFT JOIN contacts c ON p.user_id = c.id AND p.id = c.property_id
+        LEFT JOIN property_features pf ON p.id = pf.property_id
+        LEFT JOIN features f ON pf.feature_id = f.id
+        LEFT JOIN property_actions pa ON p.id = pa.property_id
+        LEFT JOIN actions a ON pa.action_id = a.id
+        GROUP BY 
+          p.id, pr.name, d.name, l.country, l.governorate, l.area, l.district,
+          pt.category, pt.subtype, c.name, c.phone, c.email, c.contact_type
+        ORDER BY p.id DESC
+        LIMIT ${limit}
+        OFFSET ${offset}
+      `;
+
+      return {
+        properties: result.rows as PropertyQueryResult[],
+        totalCount
       }
-
-      const row = result[0];
-      
-      // Get features, actions, and contacts
-      const [features, actions, contacts] = await Promise.all([
-        this.getPropertyFeatures(row.id),
-        this.getPropertyActions(row.id),
-        this.getPropertyContacts(row.id)
-      ]);
-
-      return this.mapRowToProperty(row, features, actions, contacts);
-
-    } catch (error:any) {
-      throw new Error(`Failed to find property by MLS ID: ${error.message}`);
+    } catch (error: any) {
+        throw new Error(`Failed to fetch properties: ${error.message}`);
+      }
     }
-  }
+  
 
-  async update(id: string, props: Partial<CreatePropertyRequest>): Promise<void> {
+  async update(id: number, props: Partial<CreatePropertyRequest>): Promise<void> {
     try {
       const updateFields: string[] = [];
       const values: any[] = [];
@@ -232,7 +348,7 @@ export class PropertiesRepositoryImp implements PropertiesRepositoryInterface {
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: number): Promise<void> {
     try {
       const query = `DELETE FROM properties WHERE id = $1`;
       await this.executeQuery(query, [id]);
@@ -241,7 +357,7 @@ export class PropertiesRepositoryImp implements PropertiesRepositoryInterface {
     }
   }
 
-  async approveProperty(id: string): Promise<{success: boolean}> {
+  async approveProperty(id: number): Promise<{success: boolean}> {
     try {
       const query = `
         UPDATE properties 
@@ -259,7 +375,7 @@ export class PropertiesRepositoryImp implements PropertiesRepositoryInterface {
   }
 
   // Helper methods
-  private async getPropertyFeatures(propertyId: string): Promise<FeatureInput[]> {
+  private async getPropertyFeatures(propertyId: number): Promise<FeatureInput[]> {
     const query = `
       SELECT f.id, f.name, f.icon
       FROM features f
@@ -307,54 +423,6 @@ export class PropertiesRepositoryImp implements PropertiesRepositoryInterface {
     })) || [];
   }
 
-  private mapRowToProperty(
-    row: any, 
-    features: FeatureInput[], 
-    actions: ActionInput[], 
-    contacts: ContactInput[]
-  ): Property {
-    return {
-      id: row.id,
-      mlsId: MLSIDValueObject.fromString(row.mls_id),
-      priceAmount: row.price_amount,
-      bedrooms: row.bedrooms,
-      bathrooms: row.bathrooms,
-      areaSqm: row.area_sqm,
-      developer: {
-        id: row.developer_id,
-        name: row.developer_name
-      },
-      location: {
-        id: row.location_id,
-        country: row.country,
-        governorate: row.governorate,
-        area: row.area,
-        district: row.district,
-        latitude: row.latitude,
-        longitude: row.longitude
-      },
-      propertyType: {
-        id: row.property_type_id,
-        category: row.category,
-        subtype: row.subtype
-      },
-      project: row.project_id ? {
-        id: row.project_id,
-        name: row.project_name
-      } : undefined,
-      features: features.length > 0 ? features : undefined,
-      actions: actions.length > 0 ? actions : undefined,
-      contacts: contacts.length > 0 ? contacts : undefined,
-      titleEn: row.title_en || '',
-      titleAr: row.title_ar || '',
-      DescritpionEn: row.description_en || '',
-      DescritpionAr: row.description_ar || '',
-      typeEn: row.type_en || '',
-      typeAr: row.type_ar || '',
-      addressEn: row.address_en || '',
-      addressAr: row.address_ar || ''
-    };
-  }
 
   private mapFieldToDbColumn(field: string): string {
     const fieldMap: { [key: string]: string } = {

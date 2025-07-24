@@ -7,13 +7,13 @@ import { UserRole} from '../src/modules/user/domain/valueObjects/user-role.vo';
 import { CreatePropertyRequest} from '../src/modules/properties/prestentaion/dto/CreatePropertyRequest.dto';
 import {AuthenticatedRequest} from '../src/modules/auth/application/authMiddleware';
 import { PropertyService} from '../src/modules/properties/application/properties.service';
-import { PropertiesRepositoryImp} from '../src/modules/properties/infrastructure/PropertyRepositoryImp';
+import { PropertiesRepositoryImplementation} from '../src/modules/properties/infrastructure/PropertyRepositoryImp';
 
 const app = express()
 app.use(bodyParser.json());
 
 const authService = new AuthService(new UserRepositoryImplementation());
-const propertyService = new PropertyService(new PropertiesRepositoryImp());
+const propertyService = new PropertyService(new PropertiesRepositoryImplementation());
 
 app.post('/api/auth/signup/user' , async (req, res) => {
   const { username, email, password } = req.body;
@@ -62,6 +62,11 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 
+
+
+
+
+
 app.post('/api/properties/create', AuthMiddleware(UserRole.USER), async (req, res) => {
   try {
     const authenticatedReq = req as AuthenticatedRequest;
@@ -69,6 +74,7 @@ app.post('/api/properties/create', AuthMiddleware(UserRole.USER), async (req, re
     const userId = authenticatedReq.user?.id;
 
     const data : CreatePropertyRequest = req.body
+
 
     if (!userId) {
       return res.status(403).json({ message: 'Unauthorized' });
@@ -85,7 +91,7 @@ app.post('/api/properties/create', AuthMiddleware(UserRole.USER), async (req, re
 });
 
 
-app.get('/api/properties/getAvailableProjects', AuthMiddleware(UserRole.USER), async (req, res) => {
+app.get('/api/properties/getAvailableProjects', async (req, res) => {
   try {
 
     const result = await propertyService.getProjects();
@@ -93,7 +99,74 @@ app.get('/api/properties/getAvailableProjects', AuthMiddleware(UserRole.USER), a
     res.status(201).json(result);
   } catch (error) {
     res.status(500).json({
-      message: 'Error creating property',
+      message: 'Error getting available projects',
+      details: (error as Error).message,
+    });
+  }
+});
+
+app.get('/api/properties/getPropertyTypes', async (req, res) => {
+  try {
+
+    const result = await propertyService.getProjects();
+
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error getting propertyTypes',
+      details: (error as Error).message,
+    });
+  }
+});
+
+app.get('/api/properties/getPropertyTypes', async (req, res) => {
+  try {
+
+    const result = await propertyService.getProjects();
+
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error getting propertyTypes',
+      details: (error as Error).message,
+    });
+  }
+});
+
+
+app.get('/api/properties/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (isNaN(id)) {
+      return res.status(400).json({ message: 'Invalid property ID' });
+    }
+
+    const result = await propertyService.getPropertyById(id);
+
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error getting property by ID',
+      details: (error as Error).message,
+    });
+  }
+});
+
+
+app.get('/api/properties', async (req, res) => {
+  try {
+    // Extract page and limit from query parameters (if provided)
+    const page = req.query.page ? parseInt(req.query.page as string) : undefined;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+
+    // Pass to service (will use defaults if undefined)
+    const result = await propertyService.getAllProperties(page, limit);
+    
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error getting properties',
       details: (error as Error).message,
     });
   }

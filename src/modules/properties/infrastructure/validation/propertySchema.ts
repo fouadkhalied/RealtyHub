@@ -14,7 +14,7 @@ export const PropertySchema = Joi.object({
     .valid(...Object.values(ListingType_EN))
     .required(),
 
-    status: Joi.string()
+  status: Joi.string()
     .valid(...Object.values(STATE_EN))
     .required(),
 
@@ -27,8 +27,8 @@ export const PropertySchema = Joi.object({
   titleEn: Joi.string().max(255).required(),
   titleAr: Joi.string().max(255).required(),
 
-  descriptionEn: Joi.string().allow('', null).optional(),
-  descriptionAr: Joi.string().allow('', null).optional(),
+  descriptionEn: Joi.string().max(255).disallow(null).required(),
+  descriptionAr: Joi.string().max(255).disallow(null).required(),
 
   addressEn: Joi.string().max(255).required(),
   addressAr: Joi.string().max(255).required()

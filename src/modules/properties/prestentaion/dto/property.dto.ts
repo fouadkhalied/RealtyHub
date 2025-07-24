@@ -1,13 +1,12 @@
-import { MLSIDValueObject } from "../../domain/valueObjects/mls-ID.vo";
 import { ActionInput, ContactInput, DeveloperInput, FeatureInput, LocationInput, ProjectInput, PropertyTypeInput } from "../../domain/valueObjects/helpers.vo";
 
 export interface Property {
     id: string;
-    mlsId: MLSIDValueObject;
     priceAmount: number;
     bedrooms: number;
     bathrooms: number;
     areaSqm: number;
+    status: string;
 
     // realtions
     developer: DeveloperInput;
@@ -16,7 +15,7 @@ export interface Property {
     project?: ProjectInput; // Optional
     features?: FeatureInput[];
     actions?: ActionInput[];
-    contacts?: ContactInput[];
+    contacts?: ContactInput;
 
     // Bilingual content
     titleEn: string;
@@ -28,3 +27,13 @@ export interface Property {
     addressEn : string;
     addressAr: string;
 }
+
+export interface MultipleProperties {
+    properties: Property[];
+    limit: number;
+    page: number;
+    total: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+}
+  

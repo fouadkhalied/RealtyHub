@@ -27,9 +27,13 @@ export interface DeveloperInput {
     subtype?: string;
     subtypeAr?: string;
   }
+
+  export interface ProjectInput {
+    
+  }
   
   export interface ProjectWithDeveloperAndLocation {
-    id: number;
+    project_id: number;
     name: string;
     developer_id: number | null;
     location_id: number | null;
