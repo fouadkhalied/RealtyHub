@@ -377,18 +377,29 @@ GROUP BY
 
   async approveProperty(id: number): Promise<{success: boolean}> {
     try {
-      const query = `
+      await sql`
         UPDATE properties 
-        SET is_approved = true, updated_at = NOW()
-        WHERE id = $1
+        SET is_approved = true
+        WHERE id = ${id}
       `;
-      
-      const result = await this.executeQuery(query, [id]);
-      
+
       return { success: true };
 
     } catch (error:any) {
       throw new Error(`Failed to approve property: ${error.message}`);
+    }
+  }
+
+  async rejectProperty(id: number): Promise<{success: boolean}> {
+    try {
+      await sql`
+        DELETE FROM properties WHERE id = ${id}
+      `;
+
+      return { success: true };
+
+    } catch (error: any) {
+      throw new Error(`Failed to delete property: ${error.message}`);
     }
   }
 

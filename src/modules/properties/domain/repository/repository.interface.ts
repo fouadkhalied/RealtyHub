@@ -15,4 +15,5 @@ export interface PropertiesRepositoryInterface {
     update(id: number, props: Partial<CreatePropertyRequest>): Promise<void>
     delete(id: number): Promise<void>
     approveProperty(id : number) : Promise<{success : boolean}>
+    rejectProperty(id: number): Promise<{success: boolean}>
 }

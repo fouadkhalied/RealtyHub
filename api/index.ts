@@ -132,6 +132,20 @@ app.get('/api/properties/getPropertyTypes', async (req, res) => {
   }
 });
 
+app.get('/api/properties/getRequiredInterfaces', async (req, res) => {
+  try {
+    
+    const result = await propertyService.getRequiredInterfaces();
+
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error getting properties interfaces',
+      details: (error as Error).message,
+    });
+  }
+});
+
 
 app.get('/api/properties/:id', async (req, res) => {
   try {
@@ -171,19 +185,32 @@ app.get('/api/properties', async (req, res) => {
   }
 });
 
-// app.get('/api/properties/getRequiredInterfaces', async (req, res) => {
-//   try {
-    
+app.patch('/api/properties/:id/approve',AuthMiddleware(UserRole.ADMIN), async (req, res) => {
+  try {
+    const propertyId : number = parseInt(req.params.id);
+    const result = await propertyService.approve(propertyId);
 
-//     const result = await propertyService.getAllProperties(page, limit);
-    
-//     res.status(200).json(result);
-//   } catch (error) {
-//     res.status(500).json({
-//       message: 'Error getting properties',
-//       details: (error as Error).message,
-//     });
-//   }
-// });
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error approving property',
+      details: (error as Error).message,
+    });
+  }
+});
+
+app.delete('/api/properties/:id/reject', AuthMiddleware(UserRole.ADMIN), async (req, res) => {
+  try {
+    const propertyId : number = parseInt(req.params.id);
+    const result = await propertyService.reject(propertyId);
+
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error rejecting property',
+      details: (error as Error).message,
+    });
+  }
+});
 
 export default app; 

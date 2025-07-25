@@ -26,11 +26,29 @@ export enum PropertyFeature_AR {
     AirConditioning = 'تكييف',
     CentralHeating = 'تدفئة مركزية',
     MaidRoom = 'غرفة خادمة',
+    Furnished = 'مفروش',
     StorageRoom = 'غرفة تخزين',
     SeaView = 'إطلالة على البحر',
     LakeView = 'إطلالة على البحيرة',
     GolfView = 'إطلالة على ملعب الجولف',
-    Furnished = 'مفروش',
-    SmartHome = 'منزل ذكي'
+    SmartHome = 'منزل ذكي',
+}
+
+export enum PropertyFeature_IDS {
+    Pool = 1,
+    Elevator = 2,
+    Security = 3,
+    Parking = 4,
+    Garden = 5,
+    Balcony = 6,
+    AirConditioning = 7,
+    CentralHeating = 8,
+    MaidRoom = 9,
+    Furnished = 10,
+    StorageRoom = 11,
+    SeaView = 12,
+    LakeView = 13,
+    GolfView = 14,
+    SmartHome = 15,
   }
   
