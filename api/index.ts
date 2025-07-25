@@ -75,7 +75,6 @@ app.post('/api/properties/create', AuthMiddleware(UserRole.USER), async (req, re
 
     const data : CreatePropertyRequest = req.body
 
-
     if (!userId) {
       return res.status(403).json({ message: 'Unauthorized' });
     }
@@ -84,7 +83,7 @@ app.post('/api/properties/create', AuthMiddleware(UserRole.USER), async (req, re
     res.status(201).json({ id: propertyId });
   } catch (error) {
     res.status(500).json({
-      message: 'Error creating property',
+      message: 'Error creating property in controller',
       details: (error as Error).message,
     });
   }
@@ -171,5 +170,20 @@ app.get('/api/properties', async (req, res) => {
     });
   }
 });
+
+// app.get('/api/properties/getRequiredInterfaces', async (req, res) => {
+//   try {
+    
+
+//     const result = await propertyService.getAllProperties(page, limit);
+    
+//     res.status(200).json(result);
+//   } catch (error) {
+//     res.status(500).json({
+//       message: 'Error getting properties',
+//       details: (error as Error).message,
+//     });
+//   }
+// });
 
 export default app; 

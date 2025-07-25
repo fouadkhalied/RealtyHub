@@ -25,14 +25,16 @@ export class PropertyService {
       if (error) {
         throw new Error(error.details[0].message)
       }
-      // optionally convert to entity here before saving
-      await this.propertyRepository.create(propertyToCreate);
+     
+      const id : number = await this.propertyRepository.create(propertyToCreate);
+      
+      await this.propertyRepository.addFeaturesToProperty(id , propertyToCreate.features)
 
       return { success: true };
     } catch (error) {
       // Better error handling
-      console.error("Error creating property:", error);
-      throw new Error("Failed to create property." + error);
+      console.error("Error creating property in service :", error);
+      throw new Error("Failed to create property in service ." + error);
     }
   }
 
@@ -103,5 +105,9 @@ export class PropertyService {
         hasPrevious: page > 1
       }
     };
+  }
+
+  async getRequiredInterfaces() {
+    
   }
 }

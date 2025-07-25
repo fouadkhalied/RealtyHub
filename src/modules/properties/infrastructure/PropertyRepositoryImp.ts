@@ -1,6 +1,5 @@
 import { PropertiesRepositoryInterface } from "../domain/repository/repository.interface";
 import { CreatePropertyRequest } from "../prestentaion/dto/CreatePropertyRequest.dto";
-import { Property } from "../prestentaion/dto/property.dto";
 import { 
   ProjectWithDeveloperAndLocation, 
   PropertyTypeInput,
@@ -310,7 +309,26 @@ GROUP BY
         throw new Error(`Failed to fetch properties: ${error.message}`);
       }
     }
-  
+
+    async addFeaturesToProperty(id: number, features: number[]): Promise<boolean> {
+      if (features.length === 0) return true;
+    
+      try {
+        // Build the VALUES clause as a string with placeholders
+        const placeholders = features.map((_, index) => `($${index * 2 + 1}, $${index * 2 + 2})`).join(', ');
+        const values = features.flatMap(featureId => [id, featureId]);
+        
+        await sql.query(
+          `INSERT INTO property_features (property_id, feature_id) VALUES ${placeholders}`,
+          values
+        );
+    
+        return true;
+      } catch (error) {
+        console.error('Error adding features to property:', error);
+        return false;
+      }
+    }
 
   async update(id: number, props: Partial<CreatePropertyRequest>): Promise<void> {
     try {

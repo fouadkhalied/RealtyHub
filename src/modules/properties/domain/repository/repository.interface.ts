@@ -10,6 +10,8 @@ export interface PropertiesRepositoryInterface {
     getPropertyType() : Promise<PropertyTypeInput[] | null>
     findById(id: number): Promise<PropertyQueryResult | null>
     findAll(params: PaginationParams): Promise<{properties: PropertyQueryResult[], totalCount: number }>
+    addFeaturesToProperty(id: number , features: number[]):Promise<boolean>
+    //addActionsToProperty(id: number):Promise<boolean>
     update(id: number, props: Partial<CreatePropertyRequest>): Promise<void>
     delete(id: number): Promise<void>
     approveProperty(id : number) : Promise<{success : boolean}>

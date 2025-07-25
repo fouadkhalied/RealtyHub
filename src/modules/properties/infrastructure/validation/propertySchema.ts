@@ -31,5 +31,7 @@ export const PropertySchema = Joi.object({
   descriptionAr: Joi.string().max(255).disallow(null).required(),
 
   addressEn: Joi.string().max(255).required(),
-  addressAr: Joi.string().max(255).required()
+  addressAr: Joi.string().max(255).required(),
+
+  features: Joi.array().items(Joi.number()).required()
 });

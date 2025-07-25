@@ -1,5 +1,4 @@
 export interface CreatePropertyRequest {
-  mlsId: string;
   userId: number;
 
   priceAmount: number;
@@ -25,4 +24,6 @@ export interface CreatePropertyRequest {
 
   addressEn: string;
   addressAr: string;
+
+  features:number[]
 }
