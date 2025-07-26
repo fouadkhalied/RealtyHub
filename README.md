@@ -39,7 +39,17 @@ Authorization: Bearer <your-jwt-token>
 | `GET` | `/properties/:id` | Public | `id` (path) - Property ID | Retrieve a specific property with localized information |
 | `GET` | `/properties` | Public | `page` (query, optional) - Page number<br>`limit` (query, optional) - Items per page | Get paginated list of properties |
 | `GET` | `/properties/getAvailableProjects` | Public | - | Retrieve list of available projects |
-| `GET` | `/properties/getPropertyTypes` | Public | - | Retrieve available property types |
+| `GET` | `/properties/getRequiredInterfaces` | Public | - | Retrieve required property interfaces |
+| `PATCH` | `/properties/:id/approve` | Admin | `id` (path) - Property ID | Approve a property listing |
+| `DELETE` | `/properties/:id/reject` | Admin | `id` (path) - Property ID | Reject/delete a property listing |
+
+### Property Status Management
+
+| Method | Endpoint | Security | Parameters | Description |
+|--------|----------|----------|------------|-------------|
+| `GET` | `/properties/status/counts` | Admin | - | Get count statistics (approved, pending, total) |
+| `GET` | `/properties/status/approved` | Admin | - | Retrieve all approved properties |
+| `GET` | `/properties/status/pending` | Admin | - | Retrieve all pending properties |
 
 ---
 
@@ -61,6 +71,14 @@ For `/properties` endpoint:
 - Default: `page=1`, `limit=10`
 - Maximum limit: 100 items per page
 - Response includes pagination metadata with `hasNext` and `hasPrevious` flags
+
+## Property Status Workflow
+
+Properties follow this approval workflow:
+1. **Created** - New property submitted by user (pending approval)
+2. **Pending** - Awaiting admin review (`is_approved = false`)
+3. **Approved** - Admin approved the property (`is_approved = true`)
+4. **Rejected** - Admin rejected/deleted the property
 
 ## Error Handling
 
