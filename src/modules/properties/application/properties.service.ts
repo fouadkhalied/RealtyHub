@@ -8,6 +8,7 @@ import { EnhancedPropertyResult, enhancePropertyWithLocalization } from "../infr
 import { PropertySchema } from "../infrastructure/validation/propertySchema";
 import { CreatePropertyRequest } from "../prestentaion/dto/CreatePropertyRequest.dto";
 import { PropertyQueryResult } from "../prestentaion/dto/GetPropertyResponse.dto";
+import { PropertyStatus } from "../prestentaion/dto/GetPropertyStatus";
 import { requiredInterfacesData } from "../prestentaion/dto/GetRequiredInterfaces.dto";
 
 export class PropertyService {
@@ -120,4 +121,15 @@ export class PropertyService {
     return await this.propertyRepository.rejectProperty(id)
   }
 
+  async status() : Promise<PropertyStatus> {
+    return await this.propertyRepository.status()
+  }
+
+  async getApproved() : Promise<number[]> {
+    return await this.propertyRepository.getApproved()
+  }
+
+  async getPending() : Promise<number[]> {
+    return await this.propertyRepository.getPending()
+  }
 }

@@ -10,6 +10,7 @@ import {
 import { sql } from "@vercel/postgres";
 import { PropertyQueryResult } from "../prestentaion/dto/GetPropertyResponse.dto";
 import { PaginationParams } from "../domain/valueObjects/pagination.vo";
+import { PropertyStatus } from "../prestentaion/dto/GetPropertyStatus";
 
 export class PropertiesRepositoryImplementation implements PropertiesRepositoryInterface {
   
@@ -400,6 +401,50 @@ GROUP BY
 
     } catch (error: any) {
       throw new Error(`Failed to delete property: ${error.message}`);
+    }
+  }
+
+  async status(): Promise<PropertyStatus> {
+    try {
+      const result = await sql`
+        SELECT 
+          COUNT(CASE WHEN is_approved = true THEN 1 END) AS approved,
+          COUNT(CASE WHEN is_approved = false THEN 1 END) AS pending,
+          COUNT(*) AS total
+        FROM properties;`;
+  
+      return result.rows[0] as PropertyStatus;
+    } catch (error) {
+      console.error('Error fetching property status counts:', error);
+      throw error;
+    }
+  }
+
+  async getApproved(): Promise<number[]> {
+    try {
+      const result = await sql`
+        SELECT id
+        FROM properties
+        WHERE is_approved = true;`;
+  
+      return result.rows.map(row => row.id);
+    } catch (error) {
+      console.error('Error fetching pending property IDs:', error);
+      throw error;
+    }
+  }
+
+  async getPending(): Promise<number[]> {
+    try {
+      const result = await sql`
+        SELECT id
+        FROM properties
+        WHERE is_approved = false;`;
+  
+      return result.rows.map(row => row.id);
+    } catch (error) {
+      console.error('Error fetching pending property IDs:', error);
+      throw error;
     }
   }
 

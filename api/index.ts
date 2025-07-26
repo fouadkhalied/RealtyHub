@@ -118,19 +118,7 @@ app.get('/api/properties/getPropertyTypes', async (req, res) => {
   }
 });
 
-app.get('/api/properties/getPropertyTypes', async (req, res) => {
-  try {
-
-    const result = await propertyService.getProjects();
-
-    res.status(201).json(result);
-  } catch (error) {
-    res.status(500).json({
-      message: 'Error getting propertyTypes',
-      details: (error as Error).message,
-    });
-  }
-});
+// REMOVED DUPLICATE ROUTE - This was the conflict
 
 app.get('/api/properties/getRequiredInterfaces', async (req, res) => {
   try {
@@ -166,6 +154,41 @@ app.get('/api/properties/:id', async (req, res) => {
   }
 });
 
+app.get('/api/properties/status/counts', AuthMiddleware(UserRole.ADMIN), async (req, res) => {
+  try {
+    
+    res.status(200).json(await propertyService.status());
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error getting property status counts',
+      details: (error as Error).message,
+    });
+  }
+});
+
+app.get('/api/properties/status/approved', AuthMiddleware(UserRole.ADMIN), async (req, res) => {
+  try {
+    
+    res.status(200).json(await propertyService.getApproved());
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error getting approved properties',
+      details: (error as Error).message,
+    });
+  }
+});
+
+app.get('/api/properties/status/pending', AuthMiddleware(UserRole.ADMIN), async (req, res) => {
+  try {
+    
+    res.status(200).json(await propertyService.getPending());
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error getting pending properties',
+      details: (error as Error).message,
+    });
+  }
+});
 
 app.get('/api/properties', async (req, res) => {
   try {
@@ -213,4 +236,4 @@ app.delete('/api/properties/:id/reject', AuthMiddleware(UserRole.ADMIN), async (
   }
 });
 
-export default app; 
+export default app;
