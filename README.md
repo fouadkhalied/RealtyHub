@@ -3,8 +3,12 @@
 ## Overview
 A comprehensive REST API for managing real estate properties with multi-language support (English/Arabic).
 
-## Base URL
+## Base URLs
 ```
+# Production
+https://express-js-on-vercel-amber-six.vercel.app/api
+
+# Local Development
 http://localhost:3000/api
 ```
 
