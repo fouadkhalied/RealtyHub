@@ -1,7 +1,7 @@
 # Real Estate API Documentation
 
 ## Overview
-A comprehensive REST API for managing real estate properties with multi-language support (English/Arabic).
+A comprehensive REST API for managing real estate properties with multi-language support (English/Arabic) and photo upload capabilities.
 
 ## Base URLs
 ```
@@ -47,6 +47,41 @@ Authorization: Bearer <your-jwt-token>
 | `PATCH` | `/properties/:id/approve` | Admin | `id` (path) - Property ID | Approve a property listing |
 | `DELETE` | `/properties/:id/reject` | Admin | `id` (path) - Property ID | Reject/delete a property listing |
 
+### Property Photos
+
+| Method | Endpoint | Security | Parameters | Description |
+|--------|----------|----------|------------|-------------|
+| `POST` | `/properties/:id/upload/photo` | User | `id` (path) - Property ID<br>`photo` (form-data) - Image file | Upload a photo for a specific property |
+
+**Photo Upload Details:**
+- **Content-Type**: `multipart/form-data`
+- **File Field**: `photo`
+- **Supported Formats**: JPG, PNG, GIF, WebP
+- **Max File Size**: 5MB
+- **Storage**: Supabase Storage
+- **Response**: Returns photo details including public URL
+
+**Example Request:**
+```bash
+curl -X POST \
+  https://your-api.vercel.app/api/properties/27/upload/photo \
+  -H "Authorization: Bearer <your-jwt-token>" \
+  -F "photo=@/path/to/image.jpg"
+```
+
+**Example Response:**
+```json
+{
+  "message": "Photo uploaded successfully",
+  "photo": {
+    "id": 1,
+    "fileName": "property-27-1753570258164.png",
+    "url": "https://iyufacxknugsdotvqylk.supabase.co/storage/v1/object/public/propertyphotos/property-27-1753570258164.png",
+    "size": 581553
+  }
+}
+```
+
 ### Property Status Management
 
 | Method | Endpoint | Security | Parameters | Description |
@@ -66,6 +101,34 @@ The API supports English and Arabic content with automatic localization for:
 - Status Values (active/inactive → نشط/غير نشط)
 
 All property responses include both original and localized versions with `_en` and `_ar` suffixes.
+
+---
+
+## File Upload & Storage
+
+### Photo Management
+- **Storage Provider**: Supabase Storage
+- **Bucket**: `photos`
+- **File Naming**: `property-{propertyId}-{timestamp}.{extension}`
+- **Access**: Public URLs for uploaded images
+- **Authorization**: Users can only upload photos to their own properties
+
+### Database Schema
+```sql
+-- Property photos table
+CREATE TABLE property_photos (
+    id SERIAL PRIMARY KEY,
+    property_id INTEGER NOT NULL,
+    url TEXT NOT NULL,
+    is_primary BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT fk_property_photos_property_id 
+        FOREIGN KEY (property_id) 
+        REFERENCES properties(id) 
+        ON DELETE CASCADE
+);
+```
 
 ---
 
@@ -89,8 +152,27 @@ Properties follow this approval workflow:
 Standard HTTP status codes:
 - **200**: Success
 - **201**: Created  
-- **400**: Bad Request
-- **401**: Unauthorized
-- **403**: Forbidden
-- **404**: Not Found
-- **500**: Internal Server Error
+- **400**: Bad Request (Missing file, invalid property ID)
+- **401**: Unauthorized (Invalid/missing JWT token)
+- **403**: Forbidden (Cannot upload to this property)
+- **404**: Not Found (Property not found)
+- **500**: Internal Server Error (Upload failed, database error)
+
+### Photo Upload Error Examples
+
+```json
+// Missing file
+{
+  "error": "No file uploaded"
+}
+
+// Access denied
+{
+  "error": "Access denied - cannot upload photo to this property"
+}
+
+// Storage error
+{
+  "error": "Storage upload failed: Bucket not found"
+}
+```
