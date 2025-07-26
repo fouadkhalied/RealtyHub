@@ -8,9 +8,19 @@ import { CreatePropertyRequest} from '../src/modules/properties/prestentaion/dto
 import {AuthenticatedRequest} from '../src/modules/auth/application/authMiddleware';
 import { PropertyService} from '../src/modules/properties/application/properties.service';
 import { PropertiesRepositoryImplementation} from '../src/modules/properties/infrastructure/PropertyRepositoryImp';
+import cors from "cors";
 
 const app = express()
 app.use(bodyParser.json());
+
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://express-js-on-vercel-amber-six.vercel.app'] 
+    : ['http://localhost:3000', 'http://localhost:3001' , 'http://localhost:3003' , 'http://localhost:3004' , 'http://localhost:3005'], // Local development origins
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 
 const authService = new AuthService(new UserRepositoryImplementation());
 const propertyService = new PropertyService(new PropertiesRepositoryImplementation());
