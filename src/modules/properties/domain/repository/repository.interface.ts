@@ -3,6 +3,7 @@ import { PropertyQueryResult } from "../../prestentaion/dto/GetPropertyResponse.
 import { PropertyStatus } from "../../prestentaion/dto/GetPropertyStatus";
 import { ProjectWithDeveloperAndLocation, PropertyTypeInput } from "../valueObjects/helpers.vo";
 import { PaginationParams } from "../valueObjects/pagination.vo";
+import { PropertyPhotoData, PropertyPhotoRecord } from "../valueObjects/propertyPhoto.vo";
 
 export interface PropertiesRepositoryInterface {
     create(props : CreatePropertyRequest) : Promise<number>
@@ -18,4 +19,6 @@ export interface PropertiesRepositoryInterface {
     status() : Promise<PropertyStatus>
     getApproved() : Promise<number[]>
     getPending() : Promise<number[]> 
+    findPropertyIDandUserID(propertyId : number , userId : number) : Promise<boolean>
+    savePropertyPhoto(photoData: PropertyPhotoData): Promise<PropertyPhotoRecord>
 }

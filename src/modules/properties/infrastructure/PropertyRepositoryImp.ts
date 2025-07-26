@@ -11,6 +11,7 @@ import { sql } from "@vercel/postgres";
 import { PropertyQueryResult } from "../prestentaion/dto/GetPropertyResponse.dto";
 import { PaginationParams } from "../domain/valueObjects/pagination.vo";
 import { PropertyStatus } from "../prestentaion/dto/GetPropertyStatus";
+import { PropertyPhotoData, PropertyPhotoRecord } from "../domain/valueObjects/propertyPhoto.vo";
 
 export class PropertiesRepositoryImplementation implements PropertiesRepositoryInterface {
   
@@ -447,6 +448,26 @@ GROUP BY
       throw error;
     }
   }
+
+  async findPropertyIDandUserID(propertyId: number, userId: number): Promise<boolean> {
+    const result = await sql`
+        SELECT 1
+        FROM properties
+        WHERE id = ${propertyId} AND user_id = ${userId}
+        LIMIT 1`;
+  
+    return result.rows.length > 0 
+  }
+
+  async savePropertyPhoto(photoData: PropertyPhotoData): Promise<PropertyPhotoRecord> {
+    const result = await sql`
+        INSERT INTO property_photos (property_id, url, is_primary) 
+        VALUES (${photoData.propertyId}, ${photoData.url}, ${photoData.isMain})
+        RETURNING *
+    `;
+    
+    return result.rows[0] as PropertyPhotoRecord;
+   }
 
   // Helper methods
   private async getPropertyFeatures(propertyId: number): Promise<FeatureInput[]> {

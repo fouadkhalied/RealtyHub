@@ -8,7 +8,9 @@ import { CreatePropertyRequest} from '../src/modules/properties/prestentaion/dto
 import {AuthenticatedRequest} from '../src/modules/auth/application/authMiddleware';
 import { PropertyService} from '../src/modules/properties/application/properties.service';
 import { PropertiesRepositoryImplementation} from '../src/modules/properties/infrastructure/PropertyRepositoryImp';
-import cors from "cors";
+import cors from 'cors';
+import multer from 'multer';
+import { supabaseClient } from '../src/infrastructure/supabase/supbase.connect';
 
 const app = express()
 app.use(bodyParser.json());
@@ -20,6 +22,13 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
+
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+})
 
 const authService = new AuthService(new UserRepositoryImplementation());
 const propertyService = new PropertyService(new PropertiesRepositoryImplementation());
@@ -99,6 +108,70 @@ app.post('/api/properties/create', AuthMiddleware(UserRole.USER), async (req, re
 });
 
 
+app.post('/api/properties/:id/upload/photo', AuthMiddleware(UserRole.USER), upload.single('photo'), async (req, res) => {
+    try {
+      // Validate file upload
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const authenticatedReq = req as AuthenticatedRequest;
+      const userId = authenticatedReq.user?.id;
+      const propertyId: number = parseInt(req.params.id);
+
+      // Validate inputs
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      if (isNaN(propertyId) || propertyId <= 0) {
+        return res.status(400).json({ error: 'Invalid property ID' });
+      }
+
+      // Check authorization
+      const hasAccess = await propertyService.authorizePropertyPhotoUpload(propertyId, userId);
+      if (!hasAccess) {
+        return res.status(403).json({ 
+          error: 'Access denied - cannot upload photo to this property' 
+        });
+      }
+      
+      const uploadResult = await propertyService.prepareAndUploadSupabase(req.file, propertyId);
+
+      // Save photo record to database
+      const photoRecord = await propertyService.uploadPhotoRecord({
+        propertyId,
+        fileName: uploadResult.fileName,
+        url: uploadResult.publicUrl,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+        isMain: true
+      });
+
+      res.status(201).json({
+        message: 'Photo uploaded successfully',
+        photo: {
+          id: photoRecord.id,
+          fileName: uploadResult.fileName,
+          url: uploadResult.publicUrl,
+          size: req.file.size
+        }
+      });
+
+    } catch (error) {
+      console.error('Photo upload error:', error);
+      
+      // If database save fails but file was uploaded, consider cleaning up
+      // You might want to delete the uploaded file from Supabase here
+      
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Upload failed' 
+      });
+    }
+  }
+);
+
+
 app.get('/api/properties/getAvailableProjects', async (req, res) => {
   try {
 
@@ -113,21 +186,6 @@ app.get('/api/properties/getAvailableProjects', async (req, res) => {
   }
 });
 
-app.get('/api/properties/getPropertyTypes', async (req, res) => {
-  try {
-
-    const result = await propertyService.getProjects();
-
-    res.status(201).json(result);
-  } catch (error) {
-    res.status(500).json({
-      message: 'Error getting propertyTypes',
-      details: (error as Error).message,
-    });
-  }
-});
-
-// REMOVED DUPLICATE ROUTE - This was the conflict
 
 app.get('/api/properties/getRequiredInterfaces', async (req, res) => {
   try {
@@ -178,7 +236,7 @@ app.get('/api/properties/status/counts', AuthMiddleware(UserRole.ADMIN), async (
 app.get('/api/properties/status/approved', AuthMiddleware(UserRole.ADMIN), async (req, res) => {
   try {
     
-    res.status(200).json(await propertyService.getApproved());
+    res.status(200).json(await propertyService.getApprovedProperties());
   } catch (error) {
     res.status(500).json({
       message: 'Error getting approved properties',
@@ -190,7 +248,7 @@ app.get('/api/properties/status/approved', AuthMiddleware(UserRole.ADMIN), async
 app.get('/api/properties/status/pending', AuthMiddleware(UserRole.ADMIN), async (req, res) => {
   try {
     
-    res.status(200).json(await propertyService.getPending());
+    res.status(200).json(await propertyService.getPendingProperties());
   } catch (error) {
     res.status(500).json({
       message: 'Error getting pending properties',

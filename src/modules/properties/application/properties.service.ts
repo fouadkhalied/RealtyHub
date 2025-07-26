@@ -1,8 +1,11 @@
+import { supabase, supabaseClient } from "../../../infrastructure/supabase/supbase.connect";
 import { PropertyFeature_AR, PropertyFeature_EN } from "../domain/enum/features.enum";
 import { ListingType_AR, ListingType_EN } from "../domain/enum/listingType.enum";
 import { PropertyTypeAr, PropertyTypeEn } from "../domain/enum/propertyType.enum";
 import { STATE_AR, STATE_EN } from "../domain/enum/state.enum";
+import { PropertiesServiceInterface } from "../domain/service/service.interface";
 import { PaginatedResponse } from "../domain/valueObjects/pagination.vo";
+import { PropertyPhotoData, PropertyPhotoRecord, UploadResult } from "../domain/valueObjects/propertyPhoto.vo";
 import { PropertiesRepositoryImplementation } from "../infrastructure/PropertyRepositoryImp";
 import { EnhancedPropertyResult, enhancePropertyWithLocalization } from "../infrastructure/translation/property.translate";
 import { PropertySchema } from "../infrastructure/validation/propertySchema";
@@ -11,7 +14,7 @@ import { PropertyQueryResult } from "../prestentaion/dto/GetPropertyResponse.dto
 import { PropertyStatus } from "../prestentaion/dto/GetPropertyStatus";
 import { requiredInterfacesData } from "../prestentaion/dto/GetRequiredInterfaces.dto";
 
-export class PropertyService {
+export class PropertyService implements PropertiesServiceInterface {
   constructor(
     private readonly propertyRepository: PropertiesRepositoryImplementation) {}
 
@@ -125,11 +128,53 @@ export class PropertyService {
     return await this.propertyRepository.status()
   }
 
-  async getApproved() : Promise<number[]> {
+  async getApprovedProperties() : Promise<number[]> {
     return await this.propertyRepository.getApproved()
   }
 
-  async getPending() : Promise<number[]> {
+  async getPendingProperties() : Promise<number[]> {
     return await this.propertyRepository.getPending()
+  }
+
+  async authorizePropertyPhotoUpload(propertyId : number , userId : number) : Promise<boolean> {
+    return await this.propertyRepository.findPropertyIDandUserID(propertyId,userId)
+  }
+
+  async prepareAndUploadSupabase(file: Express.Multer.File, propertyId: number): Promise<UploadResult> {
+    // Create unique filename
+    const fileExtension = file.originalname.split('.').pop() || 'jpg';
+    const fileName = `property-${propertyId}-${Date.now()}.${fileExtension}`;
+  
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('propertyphotos')
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+        upsert: false
+      });
+  
+    if (uploadError) {
+      throw new Error(`Storage upload failed: ${uploadError.message}`);
+    }
+  
+    if (!uploadData) {
+      throw new Error('Upload succeeded but no data returned');
+    }
+  
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('propertyphotos')
+      .getPublicUrl(fileName);
+  
+    return {
+      fileName: uploadData.path,
+      publicUrl,
+      fileSize: file.size,
+      mimeType: file.mimetype
+    };
+  }
+
+  async uploadPhotoRecord(photoData: PropertyPhotoData): Promise<PropertyPhotoRecord> {
+    return await this.propertyRepository.savePropertyPhoto(photoData)
   }
 }
