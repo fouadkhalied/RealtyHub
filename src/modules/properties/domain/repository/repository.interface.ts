@@ -1,13 +1,14 @@
 import { CreatePropertyRequest } from "../../prestentaion/dto/CreatePropertyRequest.dto";
+import { ProjectWithDeveloperAndLocation } from "../../prestentaion/dto/GetAvailbleProjects.dto";
 import { PropertyQueryResult } from "../../prestentaion/dto/GetPropertyResponse.dto";
 import { PropertyStatus } from "../../prestentaion/dto/GetPropertyStatus";
-import { ProjectWithDeveloperAndLocation, PropertyTypeInput } from "../valueObjects/helpers.vo";
+import { PropertyTypeInput } from "../valueObjects/helpers.vo";
 import { PaginationParams } from "../valueObjects/pagination.vo";
 import { PropertyPhotoData, PropertyPhotoRecord } from "../valueObjects/propertyPhoto.vo";
 
 export interface PropertiesRepositoryInterface {
     create(props : CreatePropertyRequest) : Promise<number>
-    getProjects() : Promise<ProjectWithDeveloperAndLocation[] | null>
+    getProjects(params: PaginationParams) : Promise<{projects : ProjectWithDeveloperAndLocation[] , totalCount : number}>
     getPropertyType() : Promise<PropertyTypeInput[] | null>
     findById(id: number): Promise<PropertyQueryResult | null>
     findAll(params: PaginationParams): Promise<{properties: PropertyQueryResult[], totalCount: number }>

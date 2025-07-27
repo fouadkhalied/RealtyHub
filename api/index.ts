@@ -175,7 +175,10 @@ app.post('/api/properties/:id/upload/photo', AuthMiddleware(UserRole.USER), uplo
 app.get('/api/properties/getAvailableProjects', async (req, res) => {
   try {
 
-    const result = await propertyService.getProjects();
+    const page = req.query.page ? parseInt(req.query.page as string) : undefined;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+
+    const result = await propertyService.getProjects(limit , page);
 
     res.status(201).json(result);
   } catch (error) {

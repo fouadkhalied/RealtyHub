@@ -4,26 +4,37 @@ import { PropertyTypeEn , PropertyTypeAr} from "../../domain/enum/propertyType.e
 import { STATE_AR , STATE_EN} from "../../domain/enum/state.enum";
 import { PropertyQueryResult } from "../../prestentaion/dto/GetPropertyResponse.dto"
 
-export interface EnhancedPropertyResult extends PropertyQueryResult {
-    listing_type_en?: string;
-    listing_type_ar?: string;
-    status_en?: string;
-    status_ar?: string;
+export interface EnhancedPropertyResult extends Omit<PropertyQueryResult, 'listing_type' | 'status' | 'property_type' | 'features'> {
+    listing_type: {
+      en?: string;
+      ar?: string;
+    };
+    
+    status: {
+      en?: string;
+      ar?: string;
+    };
     
     property_type: {
       category: string | null;
       subtype: string | null;
-      category_en?: string;
-      category_ar?: string;
-      subtype_en?: string;
-      subtype_ar?: string;
+      category_localized?: {
+        en?: string;
+        ar?: string;
+      };
+      subtype_localized?: {
+        en?: string;
+        ar?: string;
+      };
     };
     
     features: Array<{
       name: string;
       icon: string | null;
-      name_en?: string;
-      name_ar?: string;
+      name_localized?: {
+        en?: string;
+        ar?: string;
+      };
     }>;
   }
   
@@ -35,25 +46,25 @@ export interface EnhancedPropertyResult extends PropertyQueryResult {
   
   // Main function to enhance property with localized attributes
   export function enhancePropertyWithLocalization(property: PropertyQueryResult): EnhancedPropertyResult {
-    const enhanced = { ...property } as EnhancedPropertyResult;
+    const enhanced = { ...property } as any;
   
-    // Handle listing_type
+    // Handle listing_type - replace the original string with localized object
     const listingTypeKey = findEnumKey(ListingType_EN, property.listing_type) || 
                            findEnumKey(ListingType_AR, property.listing_type);
     
-    if (listingTypeKey) {
-      enhanced.listing_type_en = ListingType_EN[listingTypeKey as keyof typeof ListingType_EN];
-      enhanced.listing_type_ar = ListingType_AR[listingTypeKey as keyof typeof ListingType_AR];
-    }
+    enhanced.listing_type = {
+      en: listingTypeKey ? ListingType_EN[listingTypeKey as keyof typeof ListingType_EN] : undefined,
+      ar: listingTypeKey ? ListingType_AR[listingTypeKey as keyof typeof ListingType_AR] : undefined
+    };
   
-    // Handle status
+    // Handle status - replace the original string with localized object
     const statusKey = findEnumKey(STATE_EN, property.status) || 
                       findEnumKey(STATE_AR, property.status);
     
-    if (statusKey) {
-      enhanced.status_en = STATE_EN[statusKey as keyof typeof STATE_EN];
-      enhanced.status_ar = STATE_AR[statusKey as keyof typeof STATE_AR];
-    }
+    enhanced.status = {
+      en: statusKey ? STATE_EN[statusKey as keyof typeof STATE_EN] : undefined,
+      ar: statusKey ? STATE_AR[statusKey as keyof typeof STATE_AR] : undefined
+    };
   
     // Handle property_type category
     if (property.property_type.category) {
@@ -63,8 +74,10 @@ export interface EnhancedPropertyResult extends PropertyQueryResult {
       if (categoryKey) {
         enhanced.property_type = {
           ...enhanced.property_type,
-          category_en: PropertyTypeEn[categoryKey as keyof typeof PropertyTypeEn],
-          category_ar: PropertyTypeAr[categoryKey as keyof typeof PropertyTypeAr]
+          category_localized: {
+            en: PropertyTypeEn[categoryKey as keyof typeof PropertyTypeEn],
+            ar: PropertyTypeAr[categoryKey as keyof typeof PropertyTypeAr]
+          }
         };
       }
     }
@@ -77,8 +90,10 @@ export interface EnhancedPropertyResult extends PropertyQueryResult {
       if (subtypeKey) {
         enhanced.property_type = {
           ...enhanced.property_type,
-          subtype_en: PropertyTypeEn[subtypeKey as keyof typeof PropertyTypeEn],
-          subtype_ar: PropertyTypeAr[subtypeKey as keyof typeof PropertyTypeAr]
+          subtype_localized: {
+            en: PropertyTypeEn[subtypeKey as keyof typeof PropertyTypeEn],
+            ar: PropertyTypeAr[subtypeKey as keyof typeof PropertyTypeAr]
+          }
         };
       }
     }
@@ -91,13 +106,15 @@ export interface EnhancedPropertyResult extends PropertyQueryResult {
       if (featureKey) {
         return {
           ...feature,
-          name_en: PropertyFeature_EN[featureKey as keyof typeof PropertyFeature_EN],
-          name_ar: PropertyFeature_AR[featureKey as keyof typeof PropertyFeature_AR]
+          name_localized: {
+            en: PropertyFeature_EN[featureKey as keyof typeof PropertyFeature_EN],
+            ar: PropertyFeature_AR[featureKey as keyof typeof PropertyFeature_AR]
+          }
         };
       }
       
       return feature;
     });
   
-    return enhanced;
+    return enhanced as EnhancedPropertyResult;
   }

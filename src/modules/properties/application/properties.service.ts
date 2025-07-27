@@ -10,6 +10,7 @@ import { PropertiesRepositoryImplementation } from "../infrastructure/PropertyRe
 import { EnhancedPropertyResult, enhancePropertyWithLocalization } from "../infrastructure/translation/property.translate";
 import { PropertySchema } from "../infrastructure/validation/propertySchema";
 import { CreatePropertyRequest } from "../prestentaion/dto/CreatePropertyRequest.dto";
+import { ProjectWithDeveloperAndLocation } from "../prestentaion/dto/GetAvailbleProjects.dto";
 import { PropertyQueryResult } from "../prestentaion/dto/GetPropertyResponse.dto";
 import { PropertyStatus } from "../prestentaion/dto/GetPropertyStatus";
 import { requiredInterfacesData } from "../prestentaion/dto/GetRequiredInterfaces.dto";
@@ -35,7 +36,7 @@ export class PropertyService implements PropertiesServiceInterface {
       
       await this.propertyRepository.addFeaturesToProperty(id , propertyToCreate.features)
 
-      return { success: true };
+      return { success: true , id : id };
     } catch (error) {
       // Better error handling
       console.error("Error creating property in service :", error);
@@ -43,9 +44,25 @@ export class PropertyService implements PropertiesServiceInterface {
     }
   }
 
-  async getProjects() {
+  async getProjects(limit : number = 10 , page : number = 1) : Promise<PaginatedResponse<ProjectWithDeveloperAndLocation>> {
     try {
-      return this.propertyRepository.getProjects()
+      if (page < 1) page = 1;
+      if (limit < 1 || limit > 100) limit = 10; // Max limit of 100
+      const {projects , totalCount } = await this.propertyRepository.getProjects({ page, limit });
+
+      const totalPages = Math.ceil(totalCount / limit);
+
+      return {
+        data: projects,
+        pagination: {
+          currentPage: page,
+          limit,
+          totalCount,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrevious: page > 1
+        }
+      };
     } catch (error) {
       console.error("Error in retriveing projects:", error);
       throw new Error("Failed to retrive projects." + error);

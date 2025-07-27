@@ -3,11 +3,15 @@ import { EnhancedPropertyResult } from "../../infrastructure/translation/propert
 import { PaginatedResponse } from "../../domain/valueObjects/pagination.vo";
 import { PropertyStatus } from "../../prestentaion/dto/GetPropertyStatus";
 import { PropertyPhotoData, PropertyPhotoRecord, UploadResult } from "../valueObjects/propertyPhoto.vo";
+import { ProjectWithDeveloperAndLocation } from "../../prestentaion/dto/GetAvailbleProjects.dto";
 
 export interface PropertiesServiceInterface {
   create(props: CreatePropertyRequest, userId: number): Promise<{ success: boolean }>;
 
-  getProjects(): Promise<any>;
+  getProjects(
+    page?: number,
+    limit?: number
+  ): Promise<PaginatedResponse<ProjectWithDeveloperAndLocation>>;
 
   getPropertyTypes(): Promise<{
     propertyTypes: any;

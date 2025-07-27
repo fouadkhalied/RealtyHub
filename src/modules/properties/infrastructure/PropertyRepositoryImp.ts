@@ -1,7 +1,6 @@
 import { PropertiesRepositoryInterface } from "../domain/repository/repository.interface";
 import { CreatePropertyRequest } from "../prestentaion/dto/CreatePropertyRequest.dto";
 import { 
-  ProjectWithDeveloperAndLocation, 
   PropertyTypeInput,
   FeatureInput,
   ActionInput,
@@ -12,6 +11,7 @@ import { PropertyQueryResult } from "../prestentaion/dto/GetPropertyResponse.dto
 import { PaginationParams } from "../domain/valueObjects/pagination.vo";
 import { PropertyStatus } from "../prestentaion/dto/GetPropertyStatus";
 import { PropertyPhotoData, PropertyPhotoRecord } from "../domain/valueObjects/propertyPhoto.vo";
+import { ProjectWithDeveloperAndLocation } from "../prestentaion/dto/GetAvailbleProjects.dto";
 
 export class PropertiesRepositoryImplementation implements PropertiesRepositoryInterface {
   
@@ -60,33 +60,42 @@ export class PropertiesRepositoryImplementation implements PropertiesRepositoryI
     return result.rows[0].id as number;
   }
 
-  async getProjects(): Promise<ProjectWithDeveloperAndLocation[] | null> {
+  async getProjects(params : PaginationParams): Promise<{projects : ProjectWithDeveloperAndLocation[] , totalCount : number}> {
     try {
+      const { page, limit } = params;
+      const offset = (page - 1) * limit;
+
+      // Get total count
+      const countResult = await sql`
+        SELECT COUNT(DISTINCT p.id) as total
+        FROM projects p
+      `;
+
+      const totalCount = parseInt(countResult.rows[0].total);
+
       const result = await sql`
         SELECT 
           p.id, 
           p.name, 
-          p.developer_id,
-          p.location_id,
           d.name as developer_name,
           l.country, l.governorate, l.area, l.district
         FROM projects p
         LEFT JOIN developers d ON p.developer_id = d.id
         LEFT JOIN locations l ON p.location_id = l.id
         ORDER BY p.name
+        LIMIT ${limit}
+        OFFSET ${offset}
       `;
 
-      return result.rows.map((row: any) => ({
+      return {projects : result.rows.map((row: any) => ({
         project_id: row.id,
         name: row.name,
-        developer_id: row.developer_id,
-        location_id: row.location_id,
         developer_name: row.developer_name,
         country: row.country,
         governorate: row.governorate,
         area: row.area,
         district: row.district,
-      }));
+      })),totalCount : totalCount};
 
     } catch (error:any) {
       throw new Error(`Failed to get projects: ${error.message}`);
