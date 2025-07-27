@@ -42,7 +42,7 @@ Authorization: Bearer <your-jwt-token>
 | `POST` | `/properties/create` | User | - | Create a new property listing |
 | `GET` | `/properties/:id` | Public | `id` (path) - Property ID | Retrieve a specific property with localized information |
 | `GET` | `/properties` | Public | `page` (query, optional) - Page number<br>`limit` (query, optional) - Items per page | Get paginated list of properties |
-| `GET` | `/properties/getAvailableProjects` | Public | - | Retrieve list of available projects |
+| `GET` | `/properties/getAvailableProjects` | Public | `page` (query, optional) - Page number<br>`limit` (query, optional) - Items per page | Get paginated list of availabe Projects |
 | `GET` | `/properties/getRequiredInterfaces` | Public | - | Retrieve required property interfaces |
 | `PATCH` | `/properties/:id/approve` | Admin | `id` (path) - Property ID | Approve a property listing |
 | `DELETE` | `/properties/:id/reject` | Admin | `id` (path) - Property ID | Reject/delete a property listing |
