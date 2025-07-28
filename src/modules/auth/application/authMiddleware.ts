@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
+import { UserRole } from '../../user/domain/valueObjects/user-role.vo';
 
 export interface AuthenticatedRequest extends Request {
   user?: { id: number; email: string; role: number };
@@ -27,7 +28,12 @@ export const AuthMiddleware = (allowedRole: number) => {
       if (decoded.role === allowedRole) {
         req.user = decoded;
         return next();
-      } else {
+      }
+      else if(decoded.role === UserRole.ADMIN) {
+        req.user = decoded;
+        return next()
+      }  
+       else {
         return res.status(403).json({ message: 'Unauthorized role' });
       }
     } catch (err) {

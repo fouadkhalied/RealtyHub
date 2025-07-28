@@ -3,7 +3,7 @@ export interface UploadResult {
     publicUrl: string;
     fileSize: number;
     mimeType: string;
-  }
+}
 
 export interface PropertyPhotoData {
     propertyId: number;
@@ -12,7 +12,7 @@ export interface PropertyPhotoData {
     fileSize: number;
     mimeType: string;
     isMain:boolean
-  }
+}
   
 export interface PropertyPhotoRecord {
     id: number;

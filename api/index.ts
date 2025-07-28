@@ -10,7 +10,6 @@ import { PropertyService} from '../src/modules/properties/application/properties
 import { PropertiesRepositoryImplementation} from '../src/modules/properties/infrastructure/PropertyRepositoryImp';
 import cors from 'cors';
 import multer from 'multer';
-import { supabaseClient } from '../src/infrastructure/supabase/supbase.connect';
 
 const app = express()
 app.use(bodyParser.json());
@@ -26,7 +25,7 @@ app.use(cors({
 const upload = multer({ 
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
+    fileSize: 1 * 1024 * 1024 // 1MB limit
   }
 })
 
@@ -205,7 +204,7 @@ app.get('/api/properties/getRequiredInterfaces', async (req, res) => {
 });
 
 
-app.get('/api/properties/:id', async (req, res) => {
+app.get('/api/properties/:id',async (req, res) => {
   try {
     const id = Number(req.params.id);
 
