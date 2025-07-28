@@ -67,7 +67,7 @@ Authorization: Bearer <your-jwt-token>
 **Example Request:**
 ```bash
 curl -X POST \
-  https://your-api.vercel.app/api/properties/27/upload/photo \
+  https://express-js-on-vercel-amber-six.vercel.app/api/properties/27/upload/photo \
   -H "Authorization: Bearer <your-jwt-token>" \
   -F "photo=@/path/to/image.jpg"
 ```
