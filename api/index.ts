@@ -78,12 +78,6 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-
-
-
-
-
-
 app.post('/api/properties/create', AuthMiddleware(UserRole.USER), async (req, res) => {
   try {
     const authenticatedReq = req as AuthenticatedRequest;
@@ -204,7 +198,7 @@ app.get('/api/properties/getRequiredInterfaces', async (req, res) => {
 });
 
 
-app.get('/api/properties/:id',async (req, res) => {
+app.get('/api/properties/:id',AuthMiddleware(UserRole.USER) ,async (req, res) => {
   try {
     const id = Number(req.params.id);
 
