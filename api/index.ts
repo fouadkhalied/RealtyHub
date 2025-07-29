@@ -101,16 +101,21 @@ app.post('/api/properties/create', AuthMiddleware(UserRole.USER), async (req, re
 });
 
 
-app.post('/api/properties/:id/upload/photo', AuthMiddleware(UserRole.USER), upload.single('photo'), async (req, res) => {
+app.post('/api/properties/:id/upload/photo/:coverImageIndex', AuthMiddleware(UserRole.USER), upload.array('photo'), async (req, res) => {
     try {
-      // Validate file upload
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+      // Validate files upload
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0) {
+        return res.status(400).json({ error: 'No files uploaded' });
       }
+
 
       const authenticatedReq = req as AuthenticatedRequest;
       const userId = authenticatedReq.user?.id;
       const propertyId: number = parseInt(req.params.id);
+      const coverImageIndex : number = parseInt(req.params.coverImageIndex)
+      const maxFileSize : number = 1 * 1024 * 1024; // 10MB per file
+      const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
       // Validate inputs
       if (!userId) {
@@ -121,6 +126,28 @@ app.post('/api/properties/:id/upload/photo', AuthMiddleware(UserRole.USER), uplo
         return res.status(400).json({ error: 'Invalid property ID' });
       }
 
+      if (coverImageIndex !== null) {
+        if (isNaN(coverImageIndex) || coverImageIndex < 0 || coverImageIndex >= files.length) {
+          return res.status(400).json({ 
+            error: `Invalid coverImageIndex. Must be a number between 0 and ${files.length - 1}` 
+          });
+        }
+      }
+
+      for (const file of files) {
+        if (file.size > maxFileSize) {
+          return res.status(400).json({ 
+            error: `File ${file.originalname} is too large (max 1MB per file)` 
+          });
+        }
+
+        if (!allowedMimeTypes.includes(file.mimetype)) {
+          return res.status(400).json({ 
+            error: `File ${file.originalname} has invalid type. Only JPEG, PNG, and WebP allowed` 
+          });
+        }
+      }
+
       // Check authorization
       const hasAccess = await propertyService.authorizePropertyPhotoUpload(propertyId, userId);
       if (!hasAccess) {
@@ -129,30 +156,31 @@ app.post('/api/properties/:id/upload/photo', AuthMiddleware(UserRole.USER), uplo
         });
       }
       
-      const uploadResult = await propertyService.prepareAndUploadSupabase(req.file, propertyId);
+      const uploadPromises = files.map(file => 
+        propertyService.prepareAndUploadSupabase(file, propertyId)
+      );
+      
+      const uploadedFiles = await Promise.all(uploadPromises);
 
-      // Save photo record to database
-      const photoRecord = await propertyService.uploadPhotoRecord({
-        propertyId,
-        fileName: uploadResult.fileName,
-        url: uploadResult.publicUrl,
-        fileSize: req.file.size,
-        mimeType: req.file.mimetype,
-        isMain: true
-      });
+      const photoRecords = await Promise.all(
+        files.map((file, index) => 
+          propertyService.uploadPhotoRecord({
+            propertyId,
+            fileName: uploadedFiles[index].fileName,
+            url: uploadedFiles[index].publicUrl,
+            fileSize: file.size,
+            mimeType: file.mimetype,
+            isMain: index === coverImageIndex
+          })
+        )
+      );
 
       res.status(201).json({
-        message: 'Photo uploaded successfully',
-        photo: {
-          id: photoRecord.id,
-          fileName: uploadResult.fileName,
-          url: uploadResult.publicUrl,
-          size: req.file.size
-        }
+        message: 'Photos uploaded successfully'
       });
 
     } catch (error) {
-      console.error('Photo upload error:', error);
+      console.error('Photos upload error:', error);
       
       // If database save fails but file was uploaded, consider cleaning up
       // You might want to delete the uploaded file from Supabase here

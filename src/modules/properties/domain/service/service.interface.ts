@@ -4,6 +4,7 @@ import { PaginatedResponse } from "../../domain/valueObjects/pagination.vo";
 import { PropertyStatus } from "../../prestentaion/dto/GetPropertyStatus";
 import { PropertyPhotoData, PropertyPhotoRecord, UploadResult } from "../valueObjects/propertyPhoto.vo";
 import { ProjectWithDeveloperAndLocation } from "../../prestentaion/dto/GetAvailbleProjects.dto";
+import { PropertyListItem } from "../../prestentaion/dto/GetMultipleProperties.dto";
 
 export interface PropertiesServiceInterface {
   create(props: CreatePropertyRequest, userId: number): Promise<{ success: boolean }>;
@@ -30,7 +31,7 @@ export interface PropertiesServiceInterface {
   getAllProperties(
     page?: number,
     limit?: number
-  ): Promise<PaginatedResponse<EnhancedPropertyResult>>;
+  ): Promise<PaginatedResponse<PropertyListItem>>;
 
   getRequiredInterfaces(): Promise<any>;
 

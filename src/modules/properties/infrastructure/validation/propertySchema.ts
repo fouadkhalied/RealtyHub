@@ -18,7 +18,6 @@ export const PropertySchema = Joi.object({
     .valid(...Object.values(STATE_EN))
     .required(),
 
-  coverImageUrl: Joi.string().uri().required(),
   available_from: Joi.date().iso().required(),
 
   propertyTypeId: Joi.number().integer().positive().required(),
@@ -33,5 +32,14 @@ export const PropertySchema = Joi.object({
   addressEn: Joi.string().max(255).required(),
   addressAr: Joi.string().max(255).required(),
 
-  features: Joi.array().items(Joi.number()).required()
+  features: Joi.array().items(Joi.number()).required(),
+
+  name : Joi.string().max(50).required(),
+  email: Joi.string().max(60).required().custom((value, helpers) => {
+    if (!value.includes('@') || !value.includes('.')) {
+      return helpers.error('any.invalid');
+    }
+    return value;
+  }, 'Basic email check'),
+  phone : Joi.string().max(20).required(), 
 });

@@ -10,7 +10,6 @@ export interface CreatePropertyRequest {
   listingType: string;
   status: string;
 
-  coverImageUrl: string;
   available_from: string;
 
   propertyTypeId: number;
@@ -25,5 +24,9 @@ export interface CreatePropertyRequest {
   addressEn: string;
   addressAr: string;
 
-  features:number[]
+  features:number[];
+
+  name : string;
+  email : string;
+  phone : string; 
 }

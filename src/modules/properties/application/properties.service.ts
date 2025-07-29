@@ -11,6 +11,7 @@ import { EnhancedPropertyResult, enhancePropertyWithLocalization } from "../infr
 import { PropertySchema } from "../infrastructure/validation/propertySchema";
 import { CreatePropertyRequest } from "../prestentaion/dto/CreatePropertyRequest.dto";
 import { ProjectWithDeveloperAndLocation } from "../prestentaion/dto/GetAvailbleProjects.dto";
+import { PropertyListItem } from "../prestentaion/dto/GetMultipleProperties.dto";
 import { PropertyQueryResult } from "../prestentaion/dto/GetPropertyResponse.dto";
 import { PropertyStatus } from "../prestentaion/dto/GetPropertyStatus";
 import { requiredInterfacesData } from "../prestentaion/dto/GetRequiredInterfaces.dto";
@@ -28,13 +29,12 @@ export class PropertyService implements PropertiesServiceInterface {
       };
 
       const { error } = PropertySchema.validate(propertyToCreate)
+      
       if (error) {
         throw new Error(error.details[0].message)
       }
      
       const id : number = await this.propertyRepository.create(propertyToCreate);
-      
-      await this.propertyRepository.addFeaturesToProperty(id , propertyToCreate.features)
 
       return { success: true , id : id };
     } catch (error) {
@@ -102,7 +102,7 @@ export class PropertyService implements PropertiesServiceInterface {
   async getAllProperties(
     page: number = 1, 
     limit: number = 10
-  ): Promise<PaginatedResponse<EnhancedPropertyResult>> {
+  ): Promise<PaginatedResponse<PropertyListItem>> {
     // Validate pagination params
     if (page < 1) page = 1;
     if (limit < 1 || limit > 100) limit = 10; // Max limit of 100
@@ -110,14 +110,12 @@ export class PropertyService implements PropertiesServiceInterface {
     const { properties, totalCount } = await this.propertyRepository.findAll({ page, limit });
 
     // Enhance all properties with localization
-    const enhancedProperties = properties.map(property => 
-      enhancePropertyWithLocalization(property)
-    );
+    
 
     const totalPages = Math.ceil(totalCount / limit);
 
     return {
-      data: enhancedProperties,
+      data: properties,
       pagination: {
         currentPage: page,
         limit,
@@ -160,7 +158,8 @@ export class PropertyService implements PropertiesServiceInterface {
   async prepareAndUploadSupabase(file: Express.Multer.File, propertyId: number): Promise<UploadResult> {
     // Create unique filename
     const fileExtension = file.originalname.split('.').pop() || 'jpg';
-    const fileName = `property-${propertyId}-${Date.now()}.${fileExtension}`;
+    const uniqueSuffix = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    const fileName = `property-${propertyId}-${uniqueSuffix}.${fileExtension}`;
   
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -192,6 +191,9 @@ export class PropertyService implements PropertiesServiceInterface {
   }
 
   async uploadPhotoRecord(photoData: PropertyPhotoData): Promise<PropertyPhotoRecord> {
+    if (photoData.isMain) {
+      return await this.propertyRepository.savePropertyCoverPhoto(photoData)
+    }
     return await this.propertyRepository.savePropertyPhoto(photoData)
   }
 }

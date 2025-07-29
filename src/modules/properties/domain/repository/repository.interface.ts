@@ -1,5 +1,6 @@
 import { CreatePropertyRequest } from "../../prestentaion/dto/CreatePropertyRequest.dto";
 import { ProjectWithDeveloperAndLocation } from "../../prestentaion/dto/GetAvailbleProjects.dto";
+import { PropertyListItem } from "../../prestentaion/dto/GetMultipleProperties.dto";
 import { PropertyQueryResult } from "../../prestentaion/dto/GetPropertyResponse.dto";
 import { PropertyStatus } from "../../prestentaion/dto/GetPropertyStatus";
 import { PropertyTypeInput } from "../valueObjects/helpers.vo";
@@ -11,7 +12,7 @@ export interface PropertiesRepositoryInterface {
     getProjects(params: PaginationParams) : Promise<{projects : ProjectWithDeveloperAndLocation[] , totalCount : number}>
     getPropertyType() : Promise<PropertyTypeInput[] | null>
     findById(id: number): Promise<PropertyQueryResult | null>
-    findAll(params: PaginationParams): Promise<{properties: PropertyQueryResult[], totalCount: number }>
+    findAll(params: PaginationParams): Promise<{properties: PropertyListItem[], totalCount: number }>
     addFeaturesToProperty(id: number , features: number[]):Promise<boolean>
     update(id: number, props: Partial<CreatePropertyRequest>): Promise<void>
     delete(id: number): Promise<void>
@@ -22,4 +23,5 @@ export interface PropertiesRepositoryInterface {
     getPending() : Promise<number[]> 
     findPropertyIDandUserID(propertyId : number , userId : number) : Promise<boolean>
     savePropertyPhoto(photoData: PropertyPhotoData): Promise<PropertyPhotoRecord>
+    savePropertyCoverPhoto(photoData: PropertyPhotoData): Promise<PropertyPhotoRecord>
 }
