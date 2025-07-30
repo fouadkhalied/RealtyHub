@@ -1,12 +1,13 @@
-import { supabase, supabaseClient } from "../../../infrastructure/supabase/supbase.connect";
+import { supabase, supabaseClient } from "../../../infrastructure/supbase/supbase.connect";
 import { PropertyFeature_AR, PropertyFeature_EN } from "../domain/enum/features.enum";
 import { ListingType_AR, ListingType_EN } from "../domain/enum/listingType.enum";
 import { PropertyTypeAr, PropertyTypeEn } from "../domain/enum/propertyType.enum";
 import { STATE_AR, STATE_EN } from "../domain/enum/state.enum";
-import { PropertiesServiceInterface } from "../domain/service/service.interface";
 import { PaginatedResponse } from "../domain/valueObjects/pagination.vo";
-import { PropertyPhotoData, PropertyPhotoRecord, UploadResult } from "../domain/valueObjects/propertyPhoto.vo";
+import { PropertyPhotoData, PropertyPhotoRecord, UploadResult } from "../domain/valueObjects/propertyPhoto.helpers";
+import { PhotoRepositoryAdapter } from "../infrastructure/adapters/PhotoRepositoryAdapter";
 import { PropertiesRepositoryImplementation } from "../infrastructure/PropertyRepositoryImp";
+import { SupabaseUploader } from "../infrastructure/supabase/supbase.upload";
 import { EnhancedPropertyResult, enhancePropertyWithLocalization } from "../infrastructure/translation/property.translate";
 import { PropertySchema } from "../infrastructure/validation/propertySchema";
 import { CreatePropertyRequest } from "../prestentaion/dto/CreatePropertyRequest.dto";
@@ -15,8 +16,10 @@ import { PropertyListItem } from "../prestentaion/dto/GetMultipleProperties.dto"
 import { PropertyQueryResult } from "../prestentaion/dto/GetPropertyResponse.dto";
 import { PropertyStatus } from "../prestentaion/dto/GetPropertyStatus";
 import { requiredInterfacesData } from "../prestentaion/dto/GetRequiredInterfaces.dto";
+import { UploadPhotosUseCase } from "./usecase/propertyPhotoUpload.usecase";
+import { IUploader } from "../infrastructure/supabase/PhotoUploaderInterface";
 
-export class PropertyService implements PropertiesServiceInterface {
+export class PropertyService {
   constructor(
     private readonly propertyRepository: PropertiesRepositoryImplementation) {}
 
@@ -155,45 +158,37 @@ export class PropertyService implements PropertiesServiceInterface {
     return await this.propertyRepository.findPropertyIDandUserID(propertyId,userId)
   }
 
-  async prepareAndUploadSupabase(file: Express.Multer.File, propertyId: number): Promise<UploadResult> {
-    // Create unique filename
-    const fileExtension = file.originalname.split('.').pop() || 'jpg';
-    const uniqueSuffix = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-    const fileName = `property-${propertyId}-${uniqueSuffix}.${fileExtension}`;
-  
-    // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('propertyphotos')
-      .upload(fileName, file.buffer, {
-        contentType: file.mimetype,
-        upsert: false
-      });
-  
-    if (uploadError) {
-      throw new Error(`Storage upload failed: ${uploadError.message}`);
-    }
-  
-    if (!uploadData) {
-      throw new Error('Upload succeeded but no data returned');
-    }
-  
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('propertyphotos')
-      .getPublicUrl(fileName);
-  
-    return {
-      fileName: uploadData.path,
-      publicUrl,
-      fileSize: file.size,
-      mimeType: file.mimetype
-    };
-  }
+  async uploadPhotos(
+    propertyId : number,
+    files : Express.Multer.File[],
+    coverImageIndex : number,
+    userId : number | undefined
+  ) :Promise<{success : boolean , message : string}> {
+    try {
+      // Validate inputs
+      if (!userId) {
+        return {success : false , message : 'User not authenticated'};
+      }
 
-  async uploadPhotoRecord(photoData: PropertyPhotoData): Promise<PropertyPhotoRecord> {
-    if (photoData.isMain) {
-      return await this.propertyRepository.savePropertyCoverPhoto(photoData)
+      if (isNaN(propertyId) || propertyId <= 0) {
+        return { success : false , message: 'Invalid property ID' };
+      }
+
+      if (coverImageIndex !== null) {
+        if (isNaN(coverImageIndex) || coverImageIndex < 0 || coverImageIndex >= files.length) {
+          return{ success: false,
+            message: `Invalid coverImageIndex. Must be a number between 0 and ${files.length - 1}` 
+          }
+        }
+      }
+
+      // start
+      const uploadPhotoUseCase = new UploadPhotosUseCase(new SupabaseUploader(),propertyId,files,coverImageIndex,new PhotoRepositoryAdapter()) 
+      await uploadPhotoUseCase.execute()
+
+      return {success : true , message : `photos uploaded to property ${propertyId} successfully`}
+    } catch (error) {
+      throw new Error("Failed to upload pics." + error);
     }
-    return await this.propertyRepository.savePropertyPhoto(photoData)
   }
 }

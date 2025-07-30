@@ -112,68 +112,10 @@ app.post('/api/properties/:id/upload/photo/:coverImageIndex', AuthMiddleware(Use
 
       const authenticatedReq = req as AuthenticatedRequest;
       const userId = authenticatedReq.user?.id;
-      const propertyId: number = parseInt(req.params.id);
+      const propertyId : number = parseInt(req.params.id);
       const coverImageIndex : number = parseInt(req.params.coverImageIndex)
-      const maxFileSize : number = 1 * 1024 * 1024; // 10MB per file
-      const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
-      // Validate inputs
-      if (!userId) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-
-      if (isNaN(propertyId) || propertyId <= 0) {
-        return res.status(400).json({ error: 'Invalid property ID' });
-      }
-
-      if (coverImageIndex !== null) {
-        if (isNaN(coverImageIndex) || coverImageIndex < 0 || coverImageIndex >= files.length) {
-          return res.status(400).json({ 
-            error: `Invalid coverImageIndex. Must be a number between 0 and ${files.length - 1}` 
-          });
-        }
-      }
-
-      for (const file of files) {
-        if (file.size > maxFileSize) {
-          return res.status(400).json({ 
-            error: `File ${file.originalname} is too large (max 1MB per file)` 
-          });
-        }
-
-        if (!allowedMimeTypes.includes(file.mimetype)) {
-          return res.status(400).json({ 
-            error: `File ${file.originalname} has invalid type. Only JPEG, PNG, and WebP allowed` 
-          });
-        }
-      }
-
-      // Check authorization
-      const hasAccess = await propertyService.authorizePropertyPhotoUpload(propertyId, userId);
-      if (!hasAccess) {
-        return res.status(403).json({ 
-          error: 'Access denied - cannot upload photo to this property' 
-        });
-      }
-      
-      const uploadPromises = files.map(file => 
-        propertyService.prepareAndUploadSupabase(file, propertyId)
-      );
-      
-      const uploadedFiles = await Promise.all(uploadPromises);
-
-      const photoRecords = await Promise.all(
-        files.map((file, index) => 
-          propertyService.uploadPhotoRecord({
-            propertyId,
-            fileName: uploadedFiles[index].fileName,
-            url: uploadedFiles[index].publicUrl,
-            fileSize: file.size,
-            mimeType: file.mimetype,
-            isMain: index === coverImageIndex
-          })
-        )
-      );
+      await propertyService.uploadPhotos(propertyId,files,coverImageIndex,userId);
 
       res.status(201).json({
         message: 'Photos uploaded successfully'

@@ -2,7 +2,7 @@ import { CreatePropertyRequest } from "../../prestentaion/dto/CreatePropertyRequ
 import { EnhancedPropertyResult } from "../../infrastructure/translation/property.translate";
 import { PaginatedResponse } from "../../domain/valueObjects/pagination.vo";
 import { PropertyStatus } from "../../prestentaion/dto/GetPropertyStatus";
-import { PropertyPhotoData, PropertyPhotoRecord, UploadResult } from "../valueObjects/propertyPhoto.vo";
+import { PropertyPhotoData, PropertyPhotoRecord, UploadResult } from "../valueObjects/propertyPhoto.helpers";
 import { ProjectWithDeveloperAndLocation } from "../../prestentaion/dto/GetAvailbleProjects.dto";
 import { PropertyListItem } from "../../prestentaion/dto/GetMultipleProperties.dto";
 

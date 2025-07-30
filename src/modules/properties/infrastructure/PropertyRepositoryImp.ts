@@ -1,4 +1,4 @@
-import { PropertiesRepositoryInterface } from "../domain/repository/repository.interface";
+import { PropertiesRepositoryInterface } from "../domain/repositories/PropertyRepository";
 import { CreatePropertyRequest } from "../prestentaion/dto/CreatePropertyRequest.dto";
 import { 
   PropertyTypeInput,
@@ -10,7 +10,7 @@ import { sql, db } from "@vercel/postgres";
 import { PropertyQueryResult } from "../prestentaion/dto/GetPropertyResponse.dto";
 import { PaginationParams } from "../domain/valueObjects/pagination.vo";
 import { PropertyStatus } from "../prestentaion/dto/GetPropertyStatus";
-import { PropertyPhotoData, PropertyPhotoRecord } from "../domain/valueObjects/propertyPhoto.vo";
+import { PropertyPhotoData, PropertyPhotoRecord } from "../domain/valueObjects/propertyPhoto.helpers";
 import { ProjectWithDeveloperAndLocation } from "../prestentaion/dto/GetAvailbleProjects.dto";
 import { WRITE_QUERIES } from "./quires/quires.write";
 import { READ_QUERIES } from "./quires/quires.read";
@@ -244,26 +244,6 @@ export class PropertiesRepositoryImplementation implements PropertiesRepositoryI
       return result.rows.length > 0;
     } catch (error) {
       console.error('Error checking property and user ID:', error);
-      throw error;
-    }
-  }
-
-  async savePropertyPhoto(photoData: PropertyPhotoData): Promise<PropertyPhotoRecord> {
-    try {
-      const result = await sql.query(WRITE_QUERIES.savePropertyPhoto, [photoData.propertyId, photoData.url]);
-      return result.rows[0] as PropertyPhotoRecord;
-    } catch (error) {
-      console.error('Error saving property photo:', error);
-      throw error;
-    }
-  }
-
-  async savePropertyCoverPhoto(photoData: PropertyPhotoData): Promise<PropertyPhotoRecord> {
-    try {
-      const result = await sql.query(WRITE_QUERIES.savePropertyCoverPhoto, [photoData.url]);
-      return result.rows[0] as PropertyPhotoRecord;
-    } catch (error) {
-      console.error('Error saving property cover photo:', error);
       throw error;
     }
   }

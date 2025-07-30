@@ -5,6 +5,15 @@ export interface UploadResult {
     mimeType: string;
 }
 
+export interface PropertyPhotosInterface {
+    fileName: string;
+    isMain: boolean;
+    buffer: Buffer;
+    mimeType: string;
+    size: number;
+  }
+  
+
 export interface PropertyPhotoData {
     propertyId: number;
     fileName: string;

@@ -40,14 +40,15 @@ export const WRITE_QUERIES = {
       DELETE FROM properties 
       WHERE id = $1
     `,
-    savePropertyPhoto: `
-      INSERT INTO property_photos (property_id, url) 
-      VALUES ($1, $2)
+    savePropertyPhotos: `
+      INSERT INTO property_photos (property_id, url)
+      SELECT $1, unnest($2::text[])
       RETURNING *
     `,
     savePropertyCoverPhoto: `
       UPDATE properties 
-      SET coverimageurl = $1
+      SET coverimageurl = $2
+      WHERE id = $1
       RETURNING *
     `
   };
