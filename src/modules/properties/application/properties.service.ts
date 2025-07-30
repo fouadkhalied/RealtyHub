@@ -184,6 +184,11 @@ export class PropertyService {
 
       // start
       const uploadPhotoUseCase = new UploadPhotosUseCase(new SupabaseUploader(),propertyId,files,coverImageIndex,new PhotoRepositoryAdapter()) 
+
+      // validate that user have this property
+      if (! await uploadPhotoUseCase.validate(propertyId,userId)) {
+        return {success : false , message : 'access denied : you do not have this property'}
+      }
       await uploadPhotoUseCase.execute()
 
       return {success : true , message : `photos uploaded to property ${propertyId} successfully`}

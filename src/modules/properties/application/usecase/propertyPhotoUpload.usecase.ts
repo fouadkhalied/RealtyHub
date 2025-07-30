@@ -56,4 +56,8 @@ export class UploadPhotosUseCase {
 
     await this.repo.savePropertyPhotos(this.propertyId , photosUrl)
   }
+
+  async validate(propertyId: number, userId: number) : Promise<boolean> {
+    return this.repo.findPropertyIDandUserID(propertyId , userId)
+  }
 }

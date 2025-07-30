@@ -115,11 +115,12 @@ app.post('/api/properties/:id/upload/photo/:coverImageIndex', AuthMiddleware(Use
       const propertyId : number = parseInt(req.params.id);
       const coverImageIndex : number = parseInt(req.params.coverImageIndex)
 
-      await propertyService.uploadPhotos(propertyId,files,coverImageIndex,userId);
+      const {success , message} = await propertyService.uploadPhotos(propertyId,files,coverImageIndex,userId);
 
-      res.status(201).json({
-        message: 'Photos uploaded successfully'
-      });
+      if (success) 
+        res.status(201).json({message: message}); 
+      else 
+        res.status(404).json({ message: message});
 
     } catch (error) {
       console.error('Photos upload error:', error);
