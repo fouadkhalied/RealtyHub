@@ -96,6 +96,7 @@ export const READ_QUERIES = {
     `,
     findAllProperties: `
       SELECT 
+        p.id,
         p.price_amount,
         p.area_sqm,
         p.listing_type,

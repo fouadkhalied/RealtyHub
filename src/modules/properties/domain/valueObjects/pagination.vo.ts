@@ -13,4 +13,4 @@ export interface PaginatedResponse<T> {
       hasNext: boolean;
       hasPrevious: boolean;
     };
-  }
+}

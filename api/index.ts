@@ -3,11 +3,11 @@ import bodyParser from 'body-parser';
 import { AuthService } from '../src/modules/auth/services/AuthService';
 import { UserRepositoryImplementation } from '../src/modules/user/infrastructure/UserRepositoryImplementation';
 import { AuthMiddleware } from '../src/modules/auth/application/authMiddleware';
-import { UserRole} from '../src/modules/user/domain/valueObjects/user-role.vo';
-import { CreatePropertyRequest} from '../src/modules/properties/prestentaion/dto/CreatePropertyRequest.dto';
-import {AuthenticatedRequest} from '../src/modules/auth/application/authMiddleware';
-import { PropertyService} from '../src/modules/properties/application/properties.service';
-import { PropertiesRepositoryImplementation} from '../src/modules/properties/infrastructure/PropertyRepositoryImp';
+import { UserRole } from '../src/modules/user/domain/valueObjects/user-role.vo';
+import { CreatePropertyRequest } from '../src/modules/properties/prestentaion/dto/CreatePropertyRequest.dto';
+import {AuthenticatedRequest } from '../src/modules/auth/application/authMiddleware';
+import { PropertyService } from '../src/modules/properties/application/properties.service';
+import { PropertiesRepositoryImplementation } from '../src/modules/properties/infrastructure/PropertyRepositoryImp';
 import cors from 'cors';
 import multer from 'multer';
 
