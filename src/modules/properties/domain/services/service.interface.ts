@@ -1,6 +1,6 @@
 import { CreatePropertyRequest } from "../../prestentaion/dto/CreatePropertyRequest.dto";
 import { EnhancedPropertyResult } from "../../infrastructure/translation/property.translate";
-import { PaginatedResponse } from "../../domain/valueObjects/pagination.vo";
+import { PaginatedResponse } from "../valueObjects/pagination.vo";
 import { PropertyStatus } from "../../prestentaion/dto/GetPropertyStatus";
 import { PropertyPhotoData, PropertyPhotoRecord, UploadResult } from "../valueObjects/propertyPhoto.helpers";
 import { ProjectWithDeveloperAndLocation } from "../../prestentaion/dto/GetAvailbleProjects.dto";
