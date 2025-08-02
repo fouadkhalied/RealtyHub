@@ -64,7 +64,7 @@ app.get(
 );
 
 app.get(
-  '/api/properties/:id',AuthMiddleware(UserRole.USER),
+  '/api/properties/:id',
   (req, res) => propertyController.getPropertyById(req, res)
 );
 
