@@ -51,6 +51,11 @@ app.post(
   (req, res) => propertyController.createProperty(req, res)
 );
 
+app.get(
+  '/api/properties/getRequiredInterfaces',
+  (req, res) => propertyController.getRequiredInterfaces(req, res)
+);
+
 app.post(
   '/api/properties/:id/upload/photo/:coverImageIndex',
   AuthMiddleware(UserRole.USER),
@@ -78,6 +83,11 @@ app.post(
   '/api/properties/:id/reject',
   AuthMiddleware(UserRole.ADMIN),
   (req, res) => propertyController.rejectProperty(req, res)
+);
+
+app.get(
+  '/api/properties/status/counts',
+  (req, res) => propertyController.getPropertyStatus(req, res)
 );
 
 app.get(
