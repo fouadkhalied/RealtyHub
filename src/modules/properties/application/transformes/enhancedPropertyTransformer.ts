@@ -2,7 +2,7 @@ import { PropertyFeature_EN , PropertyFeature_AR} from "../../domain/enum/featur
 import { ListingType_AR, ListingType_EN } from "../../domain/enum/listingType.enum";
 import { PropertyTypeEn , PropertyTypeAr} from "../../domain/enum/propertyType.enum";
 import { STATE_AR , STATE_EN} from "../../domain/enum/state.enum";
-import { PropertyQueryResult } from "../../prestentaion/dto/GetPropertyResponse.dto"
+import { PropertyQueryResult } from "../dto/responses/PropertyResponse.dto"
 
 export interface EnhancedPropertyResult extends Omit<PropertyQueryResult, 'listing_type' | 'status' | 'property_type' | 'features'> {
     en: {

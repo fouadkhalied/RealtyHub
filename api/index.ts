@@ -56,6 +56,11 @@ app.get(
   (req, res) => propertyController.getRequiredInterfaces(req, res)
 );
 
+app.get(
+  '/api/properties/getAvailableProjects',
+  (req, res) => propertyController.getProjects(req, res)
+);
+
 app.post(
   '/api/properties/:id/upload/photo/:coverImageIndex',
   AuthMiddleware(UserRole.USER),
@@ -89,6 +94,19 @@ app.get(
   '/api/properties/status/counts',
   (req, res) => propertyController.getPropertyStatus(req, res)
 );
+
+app.get(
+  '/api/properties/status/approved',
+  (req, res) => propertyController.getApprovedProperties(req, res)
+);
+
+app.get(
+  '/api/properties/status/pending',
+  (req, res) => propertyController.getPendingProperties(req, res)
+);
+
+
+
 
 app.get(
   '/api/properties',

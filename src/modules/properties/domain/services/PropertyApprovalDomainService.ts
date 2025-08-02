@@ -1,4 +1,4 @@
-import { PropertyStatus } from "../../prestentaion/dto/GetPropertyStatus";
+import { PropertyStatus } from "../../application/dto/responses/PropertiesStatus";
 import { IPropertyApprovalRepository } from "../repositories/IPropertyApprovalRepository";
 
 
