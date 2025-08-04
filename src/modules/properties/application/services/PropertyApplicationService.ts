@@ -37,9 +37,9 @@ export class PropertyApplicationService {
         return this.createPaginatedResponse(properties, totalCount, paginationParams);
     }
 
-    // async updateProperty(id: number, data: Partial<CreatePropertyRequest>): Promise<void> {
-    //     return await this.propertyDomainService.updateProperty(id, data);
-    // }
+    async updateProperty(id: number, data: Partial<CreatePropertyRequest>): Promise<void> {
+        return await this.propertyDomainService.updateProperty(id, data);
+    }
 
     // async deleteProperty(id: number): Promise<void> {
     //     return await this.propertyDomainService.deleteProperty(id);

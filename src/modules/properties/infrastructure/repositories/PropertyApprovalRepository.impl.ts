@@ -2,13 +2,14 @@ import { sql } from "@vercel/postgres";
 import { PropertyStatus } from "../../application/dto/responses/PropertiesStatus";
 import { IPropertyApprovalRepository } from "../../domain/repositories/IPropertyApprovalRepository";
 import { READ_QUERIES } from "../quires/quires.read";
-import { WRITE_QUERIES } from "../quires/quires.write";
+import { UPDATE_QUIRES } from "../quires/quires.update";
+import { DELETE_QUIRES } from "../quires/quires.delete";
 
 export class PropertyApprovalRepositoryImplementation implements IPropertyApprovalRepository{
     
   async approveProperty(id: number): Promise<{ success: boolean }> {
     try {
-      await sql.query(WRITE_QUERIES.approveProperty, [id]);
+      await sql.query(UPDATE_QUIRES.approveProperty, [id]);
       return { success: true };
     } catch (error: any) {
       throw new Error(`Failed to approve property: ${error.message}`);
@@ -17,7 +18,7 @@ export class PropertyApprovalRepositoryImplementation implements IPropertyApprov
 
   async rejectProperty(id: number): Promise<{ success: boolean }> {
     try {
-      await sql.query(WRITE_QUERIES.rejectProperty, [id]);
+      await sql.query(DELETE_QUIRES.deleteProperty, [id]);
       return { success: true };
     } catch (error: any) {
       throw new Error(`Failed to delete property: ${error.message}`);

@@ -3,12 +3,13 @@ import { IPhotoRepository } from "../../domain/repositories/IPhotoRepository";
 import { PropertyPhotoRecord } from "../../domain/valueObjects/propertyPhoto.helpers";
 import { WRITE_QUERIES } from "../quires/quires.write";
 import { READ_QUERIES } from "../quires/quires.read";
+import { UPDATE_QUIRES } from "../quires/quires.update";
 
 export class PhotoRepositoryImplementation implements IPhotoRepository {
   
   async savePropertyCoverPhoto(propertyId: number, photoData: string): Promise<PropertyPhotoRecord> {
     try {
-      const result = await sql.query(WRITE_QUERIES.savePropertyCoverPhoto, [propertyId, photoData]);
+      const result = await sql.query(UPDATE_QUIRES.savePropertyCoverPhoto, [propertyId, photoData]);
       return result.rows[0] as PropertyPhotoRecord;
     } catch (error) {
       console.error('Error saving property photo:', error);

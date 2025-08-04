@@ -22,33 +22,9 @@ export const WRITE_QUERIES = {
       INSERT INTO property_features (property_id, feature_id)
       VALUES ($1, $2)
     `,
-    updateProperty: `
-      UPDATE properties 
-      SET $1
-      WHERE id = $2
-    `,
-    deleteProperty: `
-      DELETE FROM properties 
-      WHERE id = $1
-    `,
-    approveProperty: `
-      UPDATE properties 
-      SET is_approved = true
-      WHERE id = $1
-    `,
-    rejectProperty: `
-      DELETE FROM properties 
-      WHERE id = $1
-    `,
     savePropertyPhotos: `
       INSERT INTO property_photos (property_id, url)
       SELECT $1, unnest($2::text[])
-      RETURNING *
-    `,
-    savePropertyCoverPhoto: `
-      UPDATE properties 
-      SET coverimageurl = $2
-      WHERE id = $1
       RETURNING *
     `
   };

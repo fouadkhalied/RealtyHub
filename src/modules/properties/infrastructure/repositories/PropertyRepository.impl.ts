@@ -6,6 +6,8 @@ import { READ_QUERIES } from "../quires/quires.read";
 import { PropertyListItem } from "../../application/dto/responses/PropertyListResponse.dto";
 import { PaginationParams } from "../../domain/valueObjects/pagination.vo";
 import { PropertyQueryResult } from "../../application/dto/responses/PropertyResponse.dto";
+import { UPDATE_QUIRES } from "../quires/quires.update";
+import { DELETE_QUIRES } from "../quires/quires.delete";
 
 export class PropertyRepositoryImplementation implements IPropertyRepository {
 
@@ -99,37 +101,80 @@ export class PropertyRepositoryImplementation implements IPropertyRepository {
   
 
   async update(id: number, props: Partial<CreatePropertyRequest>): Promise<void> {
-    try {
-      const updateFields: string[] = [];
-      const values: any[] = [];
-      let paramCount = 1;
 
-    //   Object.entries(props).forEach(([key, value]) => {
-    //     if (value !== undefined && key !== 'mlsId') {
-    //       const dbField = this.mapFieldToDbColumn(key);
-    //       updateFields.push(`${dbField} = $${paramCount}`);
-    //       values.push(value);
-    //       paramCount++;
-    //     }
-    //   });
+    const client = await db.connect();
+    try {  
+     const { 
+  titleEn, 
+  titleAr, 
+  descriptionEn, 
+  descriptionAr, 
+  addressEn, 
+  addressAr, 
+  features, 
+  name, 
+  email, 
+  phone,
+  
+  priceAmount,
+  bedrooms,
+  bathrooms,
+  areaSqm,
+  listingType,
+  status,
+  available_from,
+  propertyTypeId,
+  projectId
+} = props;
 
-      if (updateFields.length === 0) {
-        return;
+      await client.sql`BEGIN`;
+
+      await client.query(UPDATE_QUIRES.updateProperty, [priceAmount,
+        bedrooms,
+        bathrooms,
+        areaSqm,
+        listingType,
+        status,
+        available_from,
+        propertyTypeId,
+        projectId,id]);
+
+      Promise.all([
+        await client.query(UPDATE_QUIRES.updatePropertyTranslations, [id, titleEn, descriptionEn, addressEn, 'en']),
+        await client.query(UPDATE_QUIRES.updatePropertyTranslations, [id, titleAr, descriptionAr, addressAr, 'ar'])
+      ])
+
+
+      await client.query(DELETE_QUIRES.deleteFeaturesFromProperty, [id])
+
+      if (features && features.length > 0) {
+        await Promise.all(features.map(featureId =>
+          client.query(WRITE_QUERIES.createPropertyFeatures, [id, featureId])
+        ));
       }
+      
+      await client.query(UPDATE_QUIRES.updatePropertyContact, [id, name, email, phone]);
 
-      updateFields.push(`updated_at = NOW()`);
-      values.push(id);
+      await client.query(UPDATE_QUIRES.updatePropertyAppropvalToFalse, [id]);
 
-      const query = WRITE_QUERIES.updateProperty.replace('$1', updateFields.join(', '));
-      await sql.query(query, values);
-    } catch (error: any) {
-      throw new Error(`Failed to update property: ${error.message}`);
+      await client.sql`COMMIT`;
+    } catch (error) {
+      console.error('Transaction failed:', error);
+      try {
+        await client.sql`ROLLBACK`;
+        console.log('Transaction rolled back successfully');
+      } catch (rollbackError) {
+        console.error('Rollback failed:', rollbackError);
+      }
+      throw error;
+    } finally {
+      client.release();
     }
   }
 
   async delete(id: number): Promise<void> {
     try {
-      await sql.query(WRITE_QUERIES.deleteProperty, [id]);
+      await sql.query(DELETE_QUIRES.deleteProperty, [id]);
     } catch (error: any) {
       throw new Error(`Failed to delete property: ${error.message}`);
     }

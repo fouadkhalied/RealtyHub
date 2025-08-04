@@ -51,6 +51,12 @@ app.post(
   (req, res) => propertyController.createProperty(req, res)
 );
 
+app.put(
+  '/api/properties/:id/update',
+  AuthMiddleware(UserRole.USER),
+  (req, res) => propertyController.updateProperty(req, res)
+);
+
 app.get(
   '/api/properties/getRequiredInterfaces',
   (req, res) => propertyController.getRequiredInterfaces(req, res)
@@ -78,13 +84,13 @@ app.get(
   (req, res) => propertyController.getPropertyById(req, res)
 );
 
-app.post(
+app.put(
   '/api/properties/:id/approve',
   AuthMiddleware(UserRole.ADMIN),
   (req, res) => propertyController.approveProperty(req, res)
 );
 
-app.post(
+app.delete(
   '/api/properties/:id/reject',
   AuthMiddleware(UserRole.ADMIN),
   (req, res) => propertyController.rejectProperty(req, res)

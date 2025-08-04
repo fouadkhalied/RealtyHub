@@ -106,54 +106,53 @@ export class PropertyController {
         }
     }
 
-    // async updateProperty(req: AuthenticatedRequest, res: Response): Promise<void> {
-    //     try {
-    //         const id = parseInt(req.params.id);
-    //         const userId = req.user?.id;
+    async updateProperty(req: AuthenticatedRequest, res: Response): Promise<void> {
+        try {
+            const id = parseInt(req.params.id);
+            const userId = req.user?.id;
 
-    //         if (isNaN(id) || id <= 0) {
-    //             res.status(400).json({
-    //                 success: false,
-    //                 message: 'Invalid property ID'
-    //             });
-    //             return;
-    //         }
+            if (isNaN(id) || id <= 0) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Invalid property ID'
+                });
+                return;
+            }
 
-    //         if (!userId) {
-    //             res.status(401).json({
-    //                 success: false,
-    //                 message: 'User not authenticated'
-    //             });
-    //             return;
-    //         }
+            if (!userId) {
+                res.status(401).json({
+                    success: false,
+                    message: 'User not authenticated'
+                });
+                return;
+            }
 
-    //         // Check if user owns the property (authorization)
-    //         const hasAccess = await this.propertyApplicationService.authorizePropertyAccess(id, userId);
-    //         if (!hasAccess) {
-    //             res.status(403).json({
-    //                 success: false,
-    //                 message: 'Access denied: You do not own this property'
-    //             });
-    //             return;
-    //         }
+            // Check if user owns the property (authorization)
+            if (!await this.propertyApplicationService.authorizePropertyAccess(id, userId)) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Access denied : you do not own this property'
+                });
+                return;
+            }
 
-    //         const updateData: UpdatePropertyRequest = req.body;
+            const updateData: Partial<CreatePropertyRequest> = req.body;
             
-    //         await this.propertyApplicationService.updateProperty(id, updateData);
+            await this.propertyApplicationService.updateProperty(id, updateData);
 
-    //         res.status(200).json({
-    //             success: true,
-    //             message: 'Property updated successfully'
-    //         });
-    //     } catch (error) {
-    //         console.error('Error in updateProperty:', error);
-    //         res.status(500).json({
-    //             success: false,
-    //             message: 'Failed to update property',
-    //             error: error instanceof Error ? error.message : 'Unknown error'
-    //         });
-    //     }
-    // }
+            res.status(200).json({
+                success: true,
+                message: 'Property updated successfully'
+            });
+        } catch (error) {
+            console.error('Error in updateProperty:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to update property',
+                error: error instanceof Error ? error.message : 'Unknown error'
+            });
+        }
+    }
 
     async deleteProperty(req: AuthenticatedRequest, res: Response): Promise<void> {
         try {
@@ -215,15 +214,6 @@ export class PropertyController {
                 return;
             }
 
-            // Check if user is admin (you might want to add role-based middleware)
-            if (req.user?.role !== 'admin') {
-                res.status(403).json({
-                    success: false,
-                    message: 'Access denied: Admin privileges required'
-                });
-                return;
-            }
-
             const result = await this.propertyApplicationService.approveProperty(id);
 
             res.status(200).json({
@@ -244,7 +234,6 @@ export class PropertyController {
         try {
             const id = parseInt(req.params.id);
             const adminUserId = req.user?.id;
-            const { reason } = req.body;
 
             if (isNaN(id) || id <= 0) {
                 res.status(400).json({
@@ -258,14 +247,6 @@ export class PropertyController {
                 res.status(401).json({
                     success: false,
                     message: 'User not authenticated'
-                });
-                return;
-            }
-
-            if (req.user?.role !== 'admin') {
-                res.status(403).json({
-                    success: false,
-                    message: 'Access denied: Admin privileges required'
                 });
                 return;
             }
@@ -384,7 +365,7 @@ export class PropertyController {
             if (!await this.propertyApplicationService.authorizePropertyAccess(propertyId, userId)) {
                 res.status(400).json({
                     success: false,
-                    message: 'Access denied : you do not have this property'
+                    message: 'Access denied : you do not own this property'
                 });
                 return;
             }

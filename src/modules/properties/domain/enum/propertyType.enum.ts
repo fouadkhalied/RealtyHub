@@ -10,7 +10,11 @@ export enum PropertyTypeEn {
     Shop = 'Shop',
     Land = 'Land',
     Warehouse = 'Warehouse',
-    Factory = 'Factory'
+    Factory = 'Factory',
+    Residential = 'Residential',
+    Industrial = 'Industrial',
+    Agricultural = 'Agricultural',
+    Other = 'Other'
   }
   
   export enum PropertyTypeAr {
@@ -25,6 +29,10 @@ export enum PropertyTypeEn {
     Shop = 'محل',
     Land = 'أرض',
     Warehouse = 'مخزن',
-    Factory = 'مصنع'
+    Factory = 'مصنع',
+    Residential = 'منزلي',
+    Industrial = 'صناعي',
+    Agricultural = 'زراعي',
+    Other = 'أخرى'
   }
   

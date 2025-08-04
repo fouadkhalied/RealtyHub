@@ -4,12 +4,13 @@ import { PropertyQueryResult } from "../../application/dto/responses/PropertyRes
 import { IPropertyRepository } from "../repositories/IPropertyRepository";
 import { PaginationParams } from "../valueObjects/pagination.vo";
 import { PropertyListItem } from "../../application/dto/responses/PropertyListResponse.dto";
+import { UpdatePropertySchema } from "../../application/validators/UpdatePropertyValidator";
 
 export class PropertyDomainService {
     constructor(private readonly propertyRepository: IPropertyRepository) {}
 
     async createProperty(propertyData: CreatePropertyRequest & { userId: number }): Promise<number> {
-        this.validatePropertyData(propertyData);
+        this.validatePropertyDataForCreate(propertyData);
         return await this.propertyRepository.create(propertyData);
     }
 
@@ -18,6 +19,14 @@ export class PropertyDomainService {
             throw new Error("Invalid property ID");
         }
         return await this.propertyRepository.findById(id);
+    }
+
+    async updateProperty(id: number, data: Partial<CreatePropertyRequest>): Promise<void> {
+        this.validatePropertyDataForUpdate(data);
+        if (!this.isValidId(id)) {
+            throw new Error("Invalid property ID");
+        }
+        return await this.propertyRepository.update(id, data);
     }
 
     
@@ -32,8 +41,15 @@ export class PropertyDomainService {
         return await this.propertyRepository.findPropertyIDandUserID(propertyId, userId);
     }
 
-    private validatePropertyData(propertyData: CreatePropertyRequest & { userId: number }): void {
+    private validatePropertyDataForCreate(propertyData: CreatePropertyRequest & { userId: number }): void {
         const { error } = PropertySchema.validate(propertyData);
+        if (error) {
+            throw new Error(error.details[0].message);
+        }
+    }
+
+    private validatePropertyDataForUpdate(propertyData: Partial<CreatePropertyRequest>): void {
+        const { error } = UpdatePropertySchema.validate(propertyData);
         if (error) {
             throw new Error(error.details[0].message);
         }
