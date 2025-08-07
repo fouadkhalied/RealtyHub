@@ -3,6 +3,7 @@ export interface PropertyListItem  {
     price_amount: number;
     area_sqm: number;
     bedrooms: number;
+    bathrooms: number;
     listing_type: string;
     coverimageurl: string | null;
     status: string;

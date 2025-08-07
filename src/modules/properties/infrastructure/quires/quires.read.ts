@@ -100,6 +100,7 @@ export const READ_QUERIES = {
         p.price_amount,
         p.area_sqm,
         p.bedrooms,
+        p.bathrooms,
         p.listing_type,
         p.coverimageurl,
         p.is_approved,
