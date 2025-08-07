@@ -2,6 +2,7 @@ export interface PropertyListItem  {
     id: number;
     price_amount: number;
     area_sqm: number;
+    bedrooms: number;
     listing_type: string;
     coverimageurl: string | null;
     status: string;
