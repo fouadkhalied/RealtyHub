@@ -2,7 +2,7 @@ import { PropertySchema } from "../../application/validators/CreatePropertyValid
 import { CreatePropertyRequest } from "../../application/dto/requests/CreatePropertyRequest.dto";
 import { PropertyQueryResult } from "../../application/dto/responses/PropertyResponse.dto";
 import { IPropertyRepository } from "../repositories/IPropertyRepository";
-import { PaginationParams } from "../valueObjects/pagination.vo";
+import { PaginationParams } from "../../../../libs/common/pagination.vo";
 import { PropertyListItem } from "../../application/dto/responses/PropertyListResponse.dto";
 import { UpdatePropertySchema } from "../../application/validators/UpdatePropertyValidator";
 

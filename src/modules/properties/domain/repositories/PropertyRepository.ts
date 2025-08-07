@@ -4,7 +4,7 @@ import { PropertyListItem } from "../../prestentaion/dto/GetMultipleProperties.d
 import { PropertyQueryResult } from "../../prestentaion/dto/GetPropertyResponse.dto";
 import { PropertyStatus } from "../../prestentaion/dto/GetPropertyStatus";
 import { PropertyTypeInput } from "../valueObjects/helpers.vo";
-import { PaginationParams } from "../valueObjects/pagination.vo";
+import { PaginationParams } from "../../../../libs/common/pagination.vo";
 
 export interface PropertiesRepositoryInterface {
     create(props : CreatePropertyRequest) : Promise<number>

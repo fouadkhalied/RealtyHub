@@ -1,6 +1,6 @@
 import { ProjectWithDeveloperAndLocation } from "../../application/dto/responses/ProjectResponse.dto";
 import { IPropertyLookupRepository } from "../repositories/IPropertyLookupRepository";
-import { PaginationParams } from "../valueObjects/pagination.vo";
+import { PaginationParams } from "../../../../libs/common/pagination.vo";
 
 
 export class PropertyLookupDomainService {

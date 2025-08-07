@@ -4,7 +4,7 @@ import { WRITE_QUERIES } from "../quires/quires.write";
 import { CreatePropertyRequest } from "../../application/dto/requests/CreatePropertyRequest.dto";
 import { READ_QUERIES } from "../quires/quires.read";
 import { PropertyListItem } from "../../application/dto/responses/PropertyListResponse.dto";
-import { PaginationParams } from "../../domain/valueObjects/pagination.vo";
+import { PaginationParams } from "../../../../libs/common/pagination.vo";
 import { PropertyQueryResult } from "../../application/dto/responses/PropertyResponse.dto";
 import { UPDATE_QUIRES } from "../quires/quires.update";
 import { DELETE_QUIRES } from "../quires/quires.delete";

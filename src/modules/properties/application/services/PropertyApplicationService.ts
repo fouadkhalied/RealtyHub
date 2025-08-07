@@ -1,7 +1,7 @@
 import { PropertyApprovalDomainService } from "../../domain/services/PropertyApprovalDomainService";
 import { PropertyDomainService } from "../../domain/services/PropertyDomainService";
 import { PropertyLookupDomainService } from "../../domain/services/PropertyLookupDomainService";
-import { PaginatedResponse, PaginationParams } from "../../domain/valueObjects/pagination.vo";
+import { PaginatedResponse, PaginationParams } from "../../../../libs/common/pagination.vo";
 import { CreatePropertyRequest } from "../dto/requests/CreatePropertyRequest.dto";
 import { requiredInterfacesData } from "../dto/responses/AvailblePropertyInterfaces.dtp";
 import { ProjectWithDeveloperAndLocation } from "../dto/responses/ProjectResponse.dto";

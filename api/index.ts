@@ -7,6 +7,7 @@ import { UserRole } from '../src/modules/user/domain/valueObjects/user-role.vo';
 
 import { createPropertyController } from '../src/modules/properties/composition/createPropertyController';
 import { createAuthController } from '../src/modules/auth/composition/createAuthController';
+import { createPostController } from "../src/modules/blogs/compostion/createPostController";
 
 const app = express()
 app.use(bodyParser.json());
@@ -25,8 +26,10 @@ const upload = multer({
     fileSize: 1 * 1024 * 1024 // 1MB limit
   }
 })
+
 const authController = createAuthController()
 const propertyController = createPropertyController();
+const postController = createPostController();
 
 // All Auth Routes
 app.post(
@@ -111,12 +114,16 @@ app.get(
   (req, res) => propertyController.getPendingProperties(req, res)
 );
 
-
-
-
 app.get(
   '/api/properties',
   (req, res) => propertyController.getAllProperties(req, res)
 );
+
+// All posts routes
+
+app.post(
+  '/api/posts',AuthMiddleware(UserRole.ADMIN),
+  (req,res) => postController.createPost(req,res)
+)
 
 export default app;

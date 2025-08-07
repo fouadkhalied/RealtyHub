@@ -1,7 +1,7 @@
 import { sql } from "@vercel/postgres";
 import { IPropertyLookupRepository } from "../../domain/repositories/IPropertyLookupRepository";
 import { READ_QUERIES } from "../quires/quires.read";
-import { PaginationParams } from "../../domain/valueObjects/pagination.vo";
+import { PaginationParams } from "../../../../libs/common/pagination.vo";
 import { ProjectWithDeveloperAndLocation } from "../../application/dto/responses/ProjectResponse.dto";
 import { PropertyTypeInput } from "../../domain/valueObjects/helpers.vo";
 
