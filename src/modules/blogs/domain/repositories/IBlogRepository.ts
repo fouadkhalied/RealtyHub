@@ -12,7 +12,7 @@ export interface IBlogRepository {
   findById(id: number): Promise<PostResponse | null>;
   
   // // Get post by slug with all related data
-  findBySlug(slug: string): Promise<PostResponse | null>;
+  findBySlug(slug: string): Promise<PostResponse[] | null>;
   
   // // Get paginated list of posts
   findAll(params: PaginationParams, filters: SearchRequest): Promise<PaginatedResponse<PostListResponse>>;

@@ -62,6 +62,29 @@ export class PostMainService {
     }
   }
 
+  async getPostsBySlug(
+    slug: string
+  ): Promise<ApiResponseInterface<any>> {
+    try {
+      const post = await this.blogRepo.findBySlug(slug);
+
+      if (!post) {
+        return ErrorBuilder.build(
+          ErrorCode.POST_NOT_FOUND,
+          "No post exists with the specified slug",
+          { slug: slug }
+        );
+      }
+
+      return ResponseBuilder.success(post, "Posts retrieved successfully");
+    } catch (error: any) {
+      return ErrorBuilder.build(
+        ErrorCode.INTERNAL_SERVER_ERROR,
+        error.message || "Unexpected error"
+      );
+    }
+  }
+
   async getAllPosts(
     params: PaginationParams,
     filters: SearchRequest

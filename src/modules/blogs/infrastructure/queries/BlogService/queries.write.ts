@@ -1,4 +1,4 @@
-import { BlogInsertQueries } from "../interfaces/blogInsertion";
+import { BlogInsertQueries } from "../../interfaces/blogInsertion";
 
 export const BLOG_INSERT_QUERIES: BlogInsertQueries = {
     // Insert main post - FIXED: Removed extra parameters and trailing comma

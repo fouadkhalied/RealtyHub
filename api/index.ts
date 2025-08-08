@@ -132,6 +132,11 @@ app.get(
 )
 
 app.get(
+  '/api/posts/bySlug/:slug',
+  (req,res)=> postController.getPostsBySlug(req,res)
+)
+
+app.get(
   '/api/posts',
   (req,res)=> postController.getPosts(req,res)
 )

@@ -1,7 +1,7 @@
 import { db, sql } from "@vercel/postgres";
 import { CreatePostRequest } from "../../application/dto/requests/CreatePostRequest.dto";
 import { IBlogRepository } from "../../domain/repositories/IBlogRepository";
-import { BLOG_INSERT_QUERIES } from "../queries/queries.write";
+import { BLOG_INSERT_QUERIES } from "../queries/BlogService/queries.write";
 import { PostResponse } from "../../application/dto/responses/PostResponse.dto";
 import { PaginatedResponse, PaginationParams } from "../../../../libs/common/pagination.vo";
 import { PostListResponse } from "../../application/dto/responses/PostListResponse.dto";
@@ -150,8 +150,17 @@ export class BlogRepositoryImplementation implements IBlogRepository {
     }
     
 
-    findBySlug(slug: string): Promise<PostResponse | null> {
-        
+    async findBySlug(slug: string): Promise<PostResponse[] | null> {
+        try {
+            const result = await sql.query<PostResponse>(READ_QUEIRES.findBySlug, [slug]);
+            return result.rows.length === 0 ? null : result.rows;
+        } catch (error) {
+            throw new Error(
+                `Failed to get post by slug (${slug}): ${
+                    error instanceof Error ? error.message : "Unknown error"
+                }`
+            );
+        }
     }
 
     

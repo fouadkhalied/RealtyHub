@@ -130,32 +130,41 @@ export class PostController {
     }
   }
   
+
+  async getPostsBySlug(req: Request, res: Response): Promise<void> {
+    try {
+      const slug = req.params.slug;
+      if (!slug) {
+        res
+          .status(400)
+          .json(
+            ErrorBuilder.build(
+              ErrorCode.VALIDATION_ERROR,
+              "Invalid post slug format",
+              { providedSlug: req.params.slug }
+            )
+          );
+        return;
+      }
+
+      const serviceResponse = await this.postService.getPostsBySlug(slug);
   
+      const statusCode = serviceResponse.success
+        ? 200
+        : serviceResponse.error?.details?.httpStatus || 500;
   
-
-  // async getPostBySlug(req: Request, res: Response, next: NextFunction): Promise<void> {
-  //   try {
-  //     const slug = req.params.slug;
-  //     const post = await this.postService.getPostBySlug(slug);
-
-  //     if (!post) {
-  //       throw new Error(`${slug} Post is not found`);
-  //     }
-
-  //     // Increment view count
-  //     await this.postService.incrementPostViews(post.id);
-
-  //     const response: ApiResponseInterface<PostResponse> = {
-  //       success: true,
-  //       message: 'Post retrieved successfully',
-  //       data: post
-  //     };
-
-  //     res.json(response);
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // }
+      res.status(statusCode).json(serviceResponse);
+    } catch (error: any) {
+      res
+        .status(500)
+        .json(
+          ErrorBuilder.build(
+            ErrorCode.INTERNAL_SERVER_ERROR,
+            error.message || "Unexpected error occurred"
+          )
+        );
+    }
+  }
 
   // async updatePost(req: Request, res: Response, next: NextFunction): Promise<void> {
   //   try {
