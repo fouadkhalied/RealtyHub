@@ -6,6 +6,4 @@ export interface SearchRequest {
       author_id?: number;
       title?: string;
     };
-    page?: number;
-    limit?: number;
 }

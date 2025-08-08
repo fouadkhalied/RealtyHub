@@ -7,7 +7,7 @@ import { UserRole } from '../src/modules/user/domain/valueObjects/user-role.vo';
 
 import { createPropertyController } from '../src/modules/properties/composition/createPropertyController';
 import { createAuthController } from '../src/modules/auth/composition/createAuthController';
-import { createPostController } from "../src/modules/blogs/compostion/createPostController";
+import { createPostController } from "../src/modules/blogs/composition/createPostController";
 
 const app = express()
 app.use(bodyParser.json());
@@ -124,6 +124,16 @@ app.get(
 app.post(
   '/api/posts',AuthMiddleware(UserRole.ADMIN),
   (req,res) => postController.createPost(req,res)
+)
+
+app.get(
+  '/api/posts/:id',
+  (req,res)=> postController.getPostById(req,res)
+)
+
+app.get(
+  '/api/posts',
+  (req,res)=> postController.getPosts(req,res)
 )
 
 export default app;

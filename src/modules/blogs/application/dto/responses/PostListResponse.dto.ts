@@ -1,6 +1,6 @@
-import { User } from "../../../../user/domain/entites/User";
-import { Category } from "../../entites/category.entity";
-import { Tag } from "../../entites/tag.entity";
+import { User } from "../../../../user/domain/entities/User";
+import { Category } from "../../domain/entities/category.entity";
+import { Tag } from "../../domain/entities/tag.entity";
 
 export interface PostListResponse {
     id: number;

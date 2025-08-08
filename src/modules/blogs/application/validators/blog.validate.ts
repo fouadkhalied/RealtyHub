@@ -1,6 +1,6 @@
 import Joi from "joi";
-import { PostStatus } from "../enum/postStatus.enum";
-import { SectionType } from "../enum/sectionType.enum";
+import { PostStatus } from "../../domain/enum/postStatus.enum";
+import { SectionType } from "../../domain/enum/sectionType.enum";
 
 export const validatePostCreation = Joi.object({
   slug: Joi.string()

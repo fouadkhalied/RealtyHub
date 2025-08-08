@@ -27,7 +27,10 @@ export class AuthController {
             return res.status(400).json({ message: 'email , password are required.' });
         }
       const result = await this.authAppService.login(email,password);
-      return res.status(200).json(result);
+      
+      if (result.token) return res.status(200).json(result);
+      else res.status(400).json({ error: result.message });
+
     } catch (err: any) {
       return res.status(401).json({ error: err.message });
     }

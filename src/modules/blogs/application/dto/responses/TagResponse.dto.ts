@@ -1,4 +1,4 @@
-import { Tag } from "../../entites/tag.entity";
+import { Tag } from "../../domain/entities/tag.entity";
 
 export interface TagResponse extends Tag {
   posts_count?: number;

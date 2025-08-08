@@ -1,4 +1,4 @@
-import { Category } from "../../entites/category.entity";
+import { Category } from "../../domain/entities/category.entity";
 
 export interface CategoryResponse extends Category {
   posts_count?: number;

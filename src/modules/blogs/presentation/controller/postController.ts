@@ -1,13 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import { PostMainService } from '../../application/services/blogMainService';
-import { ApiResponseInterface } from "../../application/interfaces/apiResponse.interface";
+import { ApiResponseInterface } from "../../../../libs/common/apiResponse/interfaces/apiResponse.interface";
 import { PostResponse } from '../../application/dto/responses/PostResponse.dto';
 import { CreatePostRequest } from '../../application/dto/requests/CreatePostRequest.dto';
-import { PostQueryParams } from '../../application/quires/PostQueryParams';
-import { PaginatedResponse } from '../../../../libs/common/pagination.vo';
+import { PaginatedResponse, PaginationParams } from '../../../../libs/common/pagination.vo';
 import { PostListResponse } from '../../application/dto/responses/PostListResponse.dto';
 import { AuthenticatedRequest } from '../../../auth/application/authMiddleware';
 import { UserRole } from '../../../user/domain/valueObjects/user-role.vo';
+import { ResponseBuilder } from '../../../../libs/common/apiResponse/apiResponseBuilder';
+import { ErrorCode } from '../../../../libs/common/errors/enums/basic.error.enum';
+import { ErrorBuilder } from '../../../../libs/common/errors/errorBuilder';
+import { SearchRequest } from '../../application/dto/requests/SearchPostRequest.dto';
 
 
 export class PostController {
@@ -18,76 +21,117 @@ export class PostController {
       const postData: CreatePostRequest = req.body;
       const user = req.user;
   
-      // Ensure user is present and has admin role
+      // Check authentication & role
       if (!user || user.role !== UserRole.ADMIN) {
-        throw new Error("error: unauthorized - admin access required");
+        res
+          .status(401)
+          .json(
+            ErrorBuilder.build(
+              ErrorCode.UNAUTHORIZED,
+              "Admin access required",
+              { currentRole: user?.role }
+            )
+          );
+        return;
       }
   
-      const post = await this.postService.createPost(postData, user.id);
+      const serviceResponse = await this.postService.createPost(postData, user.id);
   
-      const response: ApiResponseInterface<{ id: number; message: string }> = {
-        success: true,
-        message: 'Post created successfully',
-        data: post
+      const statusCode = serviceResponse.success ? 201 : serviceResponse.error?.details?.httpStatus || 500;
+  
+      res.status(statusCode).json(serviceResponse);
+    } catch (error: any) {
+      res
+        .status(500)
+        .json(
+          ErrorBuilder.build(
+            ErrorCode.INTERNAL_SERVER_ERROR,
+            error.message || "Unexpected error occurred"
+          )
+        );
+    }
+  }
+  
+  
+  async getPosts(req: Request, res: Response): Promise<void> {
+    try {
+      const paginatedParams: PaginationParams = {
+        page: parseInt(req.query.page as string, 10) || 1,
+        limit: parseInt(req.query.limit as string, 10) || 10,
       };
   
-      res.status(201).json(response);
-    } catch (error:any) {
-      res.status(404).send(error.message);
+      const searchParams: SearchRequest = {
+        query: (req.query.query as string) || '',
+        filters: {
+          categories: req.query.categories
+            ? (req.query.categories as string).split(',').map(Number)
+            : undefined,
+          tags: req.query.tags
+            ? (req.query.tags as string).split(',').map(Number)
+            : undefined,
+          author_id: req.query.author_id ? Number(req.query.author_id) : undefined,
+          title: req.query.title as string,
+        },
+      };
+  
+      const serviceResponse = await this.postService.getAllPosts(paginatedParams, searchParams);
+  
+      const statusCode = serviceResponse.success
+        ? 200
+        : serviceResponse.error?.details?.httpStatus || 500;
+  
+      res.status(statusCode).json(serviceResponse);
+    } catch (error: any) {
+      res
+      .status(500)
+      .json(
+        ErrorBuilder.build(
+          ErrorCode.INTERNAL_SERVER_ERROR,
+          error.message || "Unexpected error occurred"
+        )
+      );
     }
   }
   
 
-  // async getPosts(req: Request, res: Response, next: NextFunction): Promise<void> {
-  //   try {
-  //     const queryParams: PostQueryParams = {
-  //       page: parseInt(req.query.page as string) || 1,
-  //       limit: parseInt(req.query.limit as string) || 10,
-  //       status: req.query.status as 'draft' | 'published' | 'archived',
-  //       author_id: req.query.author_id ? parseInt(req.query.author_id as string) : undefined,
-  //       category_id: req.query.category_id ? parseInt(req.query.category_id as string) : undefined,
-  //       tag_id: req.query.tag_id ? parseInt(req.query.tag_id as string) : undefined,
-  //       search: req.query.search as string,
-  //       sort_by: req.query.sort_by as 'created_at' | 'updated_at' | 'published_at' | 'views' | 'title',
-  //       sort_order: req.query.sort_order as 'asc' | 'desc',
-  //       date_from: req.query.date_from as string,
-  //       date_to: req.query.date_to as string
-  //     };
-
-  //     const posts = await this.postService.getPosts(queryParams);
-
-  //     const response: ApiResponseInterface<PaginatedResponse<PostListResponse>> = {
-  //       success: true,
-  //       message: 'Posts retrieved successfully',
-  //       data: posts
-  //     };
-
-  //     res.json(response);
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // }
-
-  // async getPostById(req: Request, res: Response, next: NextFunction): Promise<void> {
-  //   try {
-  //     const id = parseInt(req.params.id);
-  //     const post = await this.postService.getPostById(id);
-
-  //     if (!post) {
-  //       throw new Error(`${id} Post is not found`);
-  //     }
-
-  //     const response: ApiResponseInterface<PostResponse> = {
-  //       success: true,
-  //       message: 'Post retrieved successfully',
-  //       data: post
-  //     };
-
-  //     res.json(response);
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // }
+  async getPostById(req: Request, res: Response): Promise<void> {
+    try {
+      const id = parseInt(req.params.id, 10);
+  
+      if (isNaN(id)) {
+        res
+          .status(400)
+          .json(
+            ErrorBuilder.build(
+              ErrorCode.VALIDATION_ERROR,
+              "Invalid post ID format",
+              { providedId: req.params.id }
+            )
+          );
+        return;
+      }
+  
+      const serviceResponse = await this.postService.getPostById(id);
+  
+      const statusCode = serviceResponse.success
+        ? 200
+        : serviceResponse.error?.details?.httpStatus || 500;
+  
+      res.status(statusCode).json(serviceResponse);
+    } catch (error: any) {
+      res
+        .status(500)
+        .json(
+          ErrorBuilder.build(
+            ErrorCode.INTERNAL_SERVER_ERROR,
+            error.message || "Unexpected error occurred"
+          )
+        );
+    }
+  }
+  
+  
+  
 
   // async getPostBySlug(req: Request, res: Response, next: NextFunction): Promise<void> {
   //   try {

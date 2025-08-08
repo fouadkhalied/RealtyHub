@@ -1,12 +1,12 @@
 import { db, sql } from "@vercel/postgres";
 import { CreatePostRequest } from "../../application/dto/requests/CreatePostRequest.dto";
-import { IBlogRepository } from "../../application/repositories/IBlogRepository";
-import { BLOG_INSERT_QUERIES } from "../quires/quires.write";
+import { IBlogRepository } from "../../domain/repositories/IBlogRepository";
+import { BLOG_INSERT_QUERIES } from "../queries/queries.write";
 import { PostResponse } from "../../application/dto/responses/PostResponse.dto";
-import { PaginatedResponse } from "../../../../libs/common/pagination.vo";
+import { PaginatedResponse, PaginationParams } from "../../../../libs/common/pagination.vo";
 import { PostListResponse } from "../../application/dto/responses/PostListResponse.dto";
-import { PostQueryParams } from "../../application/quires/PostQueryParams";
-import { Post } from "../../application/entites/post.entity";
+import { SearchRequest } from "../../application/dto/requests/SearchPostRequest.dto";
+import { READ_QUEIRES } from "../queries/BlogService/queries.read";
 
 export class BlogRepositoryImplementation implements IBlogRepository {
     async create(postData: CreatePostRequest, adminId: number): Promise<{ id: number; message: string }> {
@@ -136,13 +136,47 @@ export class BlogRepositoryImplementation implements IBlogRepository {
         }
     }
 
-    // getPostById(id: number): Promise<PostResponse | null> {
-        
-    // }
-
-    // getPostBySlug(slug: string): Promise<PostResponse | null> {
-        
-    // }
+    async findAll(
+        params: PaginationParams,
+        filters: SearchRequest
+      ): Promise<PaginatedResponse<PostListResponse>> {
+        try {
+          const offset = (params.page - 1) * params.limit;
+      
+          // Get paginated data
+          const postsResult = await sql.query<PostListResponse>(
+            READ_QUEIRES.findAll,
+            [params.limit, offset]
+          );
+      
+          // Get total count
+          const countResult = await sql.query<{ count: string }>(READ_QUEIRES.countAll);
+          const totalCount = parseInt(countResult.rows[0].count, 10);
+      
+          const totalPages = Math.ceil(totalCount / params.limit);
+      
+          return {
+            data: postsResult.rows,
+            pagination: {
+              currentPage: params.page,
+              limit: params.limit,
+              totalCount,
+              totalPages,
+              hasNext: params.page < totalPages,
+              hasPrevious: params.page > 1,
+            },
+          };
+        } catch (error) {
+          throw new Error(
+            `Failed to get paginated posts: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`
+          );
+        }
+      }
+      
+      
+      
 
     // async getPosts(params: PostQueryParams): Promise<PaginatedResponse<PostListResponse>> {
     //     try {
