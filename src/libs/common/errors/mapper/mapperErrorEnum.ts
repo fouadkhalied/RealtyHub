@@ -5,7 +5,9 @@ export const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
     [ErrorCode.MISSING_REQUIRED_FIELD]: 400,
     [ErrorCode.INVALID_FORMAT]: 400,
   
+    [ErrorCode.AUTO_LOGIN_FAILED]: 401,
     [ErrorCode.UNAUTHORIZED]: 401,
+    [ErrorCode.INVALID_PASSWORD]: 401,
     [ErrorCode.FORBIDDEN]: 403,
   
     [ErrorCode.RESOURCE_NOT_FOUND]: 404,
@@ -22,5 +24,6 @@ export const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
     [ErrorCode.INTERNAL_SERVER_ERROR]: 500,
     [ErrorCode.SERVICE_UNAVAILABLE]: 503,
     [ErrorCode.DATABASE_ERROR]: 500,
-    [ErrorCode.TIMEOUT_ERROR]: 504
-  };
+    [ErrorCode.TIMEOUT_ERROR]: 504,
+    [ErrorCode.SERVER_ERROR]: 500
+};

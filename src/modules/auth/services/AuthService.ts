@@ -3,6 +3,10 @@ import jwt from 'jsonwebtoken';
 import { User } from '../../user/domain/entites/User';
 import { UserRepositoryImplementation } from '../../user/infrastructure/UserRepositoryImplementation';
 import { UserRole } from '../../user/domain/valueObjects/user-role.vo';
+import { ApiResponseInterface } from '../../../libs/common/apiResponse/interfaces/apiResponse.interface';
+import { ErrorCode } from '../../../libs/common/errors/enums/basic.error.enum';
+import { ErrorBuilder } from '../../../libs/common/errors/errorBuilder';
+import { ResponseBuilder } from '../../../libs/common/apiResponse/apiResponseBuilder';
 
 export class AuthService {
   constructor(private readonly userRepository: UserRepositoryImplementation) {}
@@ -12,15 +16,15 @@ export class AuthService {
     username: string,
     email: string,
     password: string
-  ): Promise<{ token: string | null; message: string }> {
+  ): Promise<ApiResponseInterface<{token : string | null , message : string}>> {
     if (role === UserRole.ADMIN) {
-      return {token : null , message : 'unauthorized access'}
+      return ErrorBuilder.build(ErrorCode.FORBIDDEN, "Unauthorized Access");
     }
 
     const userExists: User | null = await this.userRepository.findByEmail(email);
     
     if (userExists) {
-      return { token: null, message: "User already exists" };
+      return ErrorBuilder.build(ErrorCode.VALIDATION_ERROR, "User already exists");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -35,33 +39,35 @@ export class AuthService {
     );
 
     if (user.role === UserRole.USER) {
-      return await this.login(user.email, password);
+      const { data } = await this.login(user.email, password);
+      if (!data?.token) {
+        return ErrorBuilder.build(ErrorCode.AUTO_LOGIN_FAILED, "auto login after sign up for user role failed");
+      }
+      return ResponseBuilder.success({token : data.token , message : data.message});
     }
 
-    return {
-      token: null,
-      message:
-        user.role === UserRole.CustomerService
+    return ResponseBuilder.success({
+      token : null,
+      message : user.role === UserRole.CustomerService
           ? "Customer service account created"
-          : "User account created",
-    };
+          : "Admin account created"});
   }
 
-  async login(email: string, password: string): Promise<{ token: string | null; message: string }> {
+  async login(email: string, password: string): Promise<ApiResponseInterface<{ token: string | null; message: string }>> {
     const user: User | null = await this.userRepository.findByEmail(email);
 
     if (!user) {
-      return { token: null, message: "User not found" };
+      return ErrorBuilder.build(ErrorCode.USER_NOT_FOUND, "User does not exist. Sign up!");
     }
 
     const passwordIsValid = await bcrypt.compare(password, user.password as string);
 
     if (!passwordIsValid) {
-      return { token: null, message: "Invalid password" };
+      return ErrorBuilder.build(ErrorCode.INVALID_PASSWORD, "Invalid password");
     }
 
     if (!process.env.JWT_SECRET) {
-      return { token: null, message: "JWT_SECRET is not set in environment variables" };
+      return ErrorBuilder.build(ErrorCode.SERVER_ERROR, "JWT_SECRET is not set in environment variables");
     }
 
     const token = jwt.sign(
@@ -74,6 +80,6 @@ export class AuthService {
       { expiresIn: '1h' }
     );
 
-    return { token, message: "Login successful" };
+    return ResponseBuilder.success({ token, message: "Login successful" });
   }
 }
