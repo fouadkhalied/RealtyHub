@@ -136,6 +136,25 @@ export class BlogRepositoryImplementation implements IBlogRepository {
         }
     }
 
+    async findById(id: number): Promise<PostResponse | null> {
+        try {
+            const result = await sql.query<PostResponse>(READ_QUEIRES.findById, [id]);
+            return result.rows[0] || null;
+        } catch (error) {
+            throw new Error(
+                `Failed to get post by id (${id}): ${
+                    error instanceof Error ? error.message : "Unknown error"
+                }`
+            );
+        }
+    }
+    
+
+    findBySlug(slug: string): Promise<PostResponse | null> {
+        
+    }
+
+    
     async findAll(
         params: PaginationParams,
         filters: SearchRequest
@@ -175,7 +194,7 @@ export class BlogRepositoryImplementation implements IBlogRepository {
         }
       }
       
-      
+            
       
 
     // async getPosts(params: PostQueryParams): Promise<PaginatedResponse<PostListResponse>> {
