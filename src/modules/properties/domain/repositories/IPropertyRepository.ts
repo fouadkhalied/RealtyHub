@@ -1,6 +1,6 @@
-import { CreatePropertyRequest } from "../../prestentaion/dto/CreatePropertyRequest.dto";
-import { PropertyListItem } from "../../prestentaion/dto/GetMultipleProperties.dto";
-import { PropertyQueryResult } from "../../prestentaion/dto/GetPropertyResponse.dto";
+import { CreatePropertyRequest } from "../../application/dto/requests/CreatePropertyRequest.dto";
+import { PropertyListItem } from "../../application/dto/responses/PropertyListResponse.dto";
+import { PropertyQueryResult } from "../../application/dto/responses/PropertyResponse.dto";
 import { PaginationParams } from "../../../../libs/common/pagination.vo";
 
 export interface IPropertyRepository {

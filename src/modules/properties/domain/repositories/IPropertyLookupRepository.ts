@@ -1,4 +1,4 @@
-import { ProjectWithDeveloperAndLocation } from "../../prestentaion/dto/GetAvailbleProjects.dto";
+import { ProjectWithDeveloperAndLocation } from "../../application/dto/responses/ProjectResponse.dto";
 import { PropertyTypeInput } from "../valueObjects/helpers.vo";
 import { PaginationParams } from "../../../../libs/common/pagination.vo";
 

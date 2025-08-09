@@ -1,3 +1,6 @@
+import { ApiResponseInterface } from "../../../../libs/common/apiResponse/interfaces/apiResponse.interface";
+import { ErrorCode } from "../../../../libs/common/errors/enums/basic.error.enum";
+import { ErrorBuilder } from "../../../../libs/common/errors/errorBuilder";
 import { PropertyApprovalDomainService } from "../../domain/services/PropertyApprovalDomainService";
 import { ServiceResult } from "../interfaces/serviceResult";
 
@@ -6,33 +9,27 @@ export class PropertyApprovalWorkflowUseCase {
         private readonly propertyApprovalService: PropertyApprovalDomainService
     ) {}
 
-    async approveProperty(propertyId: number): Promise<ServiceResult> {
+    async approveProperty(propertyId: number): Promise<ApiResponseInterface<{PropertyId: number}>> {
         try {
-
             // Approve property
-            const result = await this.propertyApprovalService.approveProperty(propertyId);
-            
-            return {
-                success: result.success,
-                message: result.success ? "Property approved successfully" : "Failed to approve property"
-            };
-        } catch (error) {
-            console.error("Error in PropertyApprovalWorkflowUseCase:", error);
-            throw error;
+            return await this.propertyApprovalService.approveProperty(propertyId);
+        } catch (error: any) {
+            return ErrorBuilder.build(
+                ErrorCode.INTERNAL_SERVER_ERROR, 
+                `PropertyApprovalWorkflowUseCase : ${error.message}`
+              );
         }
     }
 
-    async rejectProperty(propertyId: number): Promise<ServiceResult> {
+    async rejectProperty(propertyId: number): Promise<ApiResponseInterface<{PropertyId: number}>> {
         try {
-            const result = await this.propertyApprovalService.rejectProperty(propertyId);
-            
-            return {
-                success: result.success,
-                message: result.success ? "Property rejected successfully" : "Failed to reject property"
-            };
-        } catch (error) {
-            console.error("Error in PropertyApprovalWorkflowUseCase:", error);
-            throw error;
+            // Reject property
+            return await this.propertyApprovalService.rejectProperty(propertyId);
+        } catch (error: any) {
+            return ErrorBuilder.build(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                `PropertyApprovalWorkflowUseCase : ${error.message}`
+            );
         }
     }
 }

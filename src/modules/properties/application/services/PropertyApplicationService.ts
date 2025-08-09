@@ -12,6 +12,7 @@ import { EnhancedPropertyResult, enhancePropertyWithLocalization } from "../tran
 import { CreatePropertyUseCase } from "../use-cases/CreateProperty.usecase";
 import { PropertyApprovalWorkflowUseCase } from "../use-cases/PropertyApprovalWorkflow.usecase";
 import { UploadPropertyPhotosUseCase } from "../use-cases/UploadPropertyPhotos.usecase";
+import { ApiResponseInterface } from "../../../../libs/common/apiResponse/interfaces/apiResponse.interface";
 
 export class PropertyApplicationService {
     constructor(
@@ -73,11 +74,11 @@ export class PropertyApplicationService {
         return await this.createPropertyUseCase.execute(props, userId);
     }
 
-    async approveProperty(propertyId: number): Promise<ServiceResult> {
+    async approveProperty(propertyId: number): Promise<ApiResponseInterface<{PropertyId: number}>> {
         return await this.approvalWorkflowUseCase.approveProperty(propertyId);
     }
 
-    async rejectProperty(propertyId: number): Promise<ServiceResult> {
+    async rejectProperty(propertyId: number): Promise<ApiResponseInterface<{PropertyId: number}>> {
         return await this.approvalWorkflowUseCase.rejectProperty(propertyId);
     }
 

@@ -1,8 +1,15 @@
 export const UPDATE_QUIRES = {
     approveProperty: `
+      WITH before_update AS (
+        SELECT id, is_approved as was_approved 
+        FROM properties 
+        WHERE id = $1
+      )
       UPDATE properties 
       SET is_approved = true
-      WHERE id = $1
+      FROM before_update
+      WHERE properties.id = $1
+      RETURNING properties.id, before_update.was_approved
     `,
     updateProperty: `UPDATE properties SET 
       price_amount = $1,

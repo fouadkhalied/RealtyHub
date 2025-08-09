@@ -7,10 +7,19 @@ import { DELETE_QUIRES } from "../quires/quires.delete";
 
 export class PropertyApprovalRepositoryImplementation implements IPropertyApprovalRepository{
     
-  async approveProperty(id: number): Promise<{ success: boolean }> {
+  async approveProperty(id: number): Promise<{ success: boolean; alreadyApproved: boolean }> {
     try {
-      await sql.query(UPDATE_QUIRES.approveProperty, [id]);
-      return { success: true };
+      const result = await sql.query(UPDATE_QUIRES.approveProperty, [id]);
+  
+      if (result.rows.length === 0) {
+        throw new Error('Property not found');
+      }
+  
+      return {
+        success: true,
+        alreadyApproved: result.rows[0].was_approved
+      };
+  
     } catch (error: any) {
       throw new Error(`Failed to approve property: ${error.message}`);
     }
@@ -18,8 +27,11 @@ export class PropertyApprovalRepositoryImplementation implements IPropertyApprov
 
   async rejectProperty(id: number): Promise<{ success: boolean }> {
     try {
-      await sql.query(DELETE_QUIRES.deleteProperty, [id]);
-      return { success: true };
+      const result = await sql.query(DELETE_QUIRES.deleteProperty, [id]);
+      if (result.rows.length === 0) {
+        throw new Error("Property not found");
+      }
+      return {success : true}
     } catch (error: any) {
       throw new Error(`Failed to delete property: ${error.message}`);
     }

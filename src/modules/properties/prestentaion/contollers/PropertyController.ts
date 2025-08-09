@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import { PropertyApplicationService } from '../../application/services/PropertyApplicationService';
 import { CreatePropertyRequest } from '../../application/dto/requests/CreatePropertyRequest.dto';
+import { ErrorBuilder } from '../../../../libs/common/errors/errorBuilder';
+import { ErrorCode } from '../../../../libs/common/errors/enums/basic.error.enum';
+import { ERROR_STATUS_MAP } from '../../../../libs/common/errors/mapper/mapperErrorEnum';
 //import { UpdatePropertyRequest } from '../../application/dto/requests/UpdatePropertyRequest.dto';
 
 interface AuthenticatedRequest extends Request {
@@ -22,10 +25,8 @@ export class PropertyController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                res.status(401).json({
-                    success: false,
-                    message: 'User not authenticated'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.UNAUTHORIZED, 'User not authenticated');
+                res.status(ERROR_STATUS_MAP[ErrorCode.UNAUTHORIZED]).json(errorResponse);
                 return;
             }
 
@@ -40,11 +41,11 @@ export class PropertyController {
             });
         } catch (error) {
             console.error('Error in createProperty:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to create property',
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
+            const errorResponse = ErrorBuilder.build(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                'Failed to create property'
+            );
+            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
         }
     }
 
@@ -53,20 +54,16 @@ export class PropertyController {
             const id = parseInt(req.params.id);
             
             if (isNaN(id) || id <= 0) {
-                res.status(400).json({
-                    success: false,
-                    message: 'Invalid property ID'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.INVALID_FORMAT, 'Invalid property ID');
+                res.status(ERROR_STATUS_MAP[ErrorCode.INVALID_FORMAT]).json(errorResponse);
                 return;
             }
 
             const property = await this.propertyApplicationService.getPropertyById(id);
 
             if (!property) {
-                res.status(404).json({
-                    success: false,
-                    message: 'Property not found'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.PROPERTY_NOT_FOUND, 'Property not found');
+                res.status(ERROR_STATUS_MAP[ErrorCode.PROPERTY_NOT_FOUND]).json(errorResponse);
                 return;
             }
 
@@ -76,11 +73,11 @@ export class PropertyController {
             });
         } catch (error) {
             console.error('Error in getPropertyById:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to retrieve property',
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
+            const errorResponse = ErrorBuilder.build(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                'Failed to retrieve property'
+            );
+            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
         }
     }
 
@@ -98,11 +95,11 @@ export class PropertyController {
             });
         } catch (error) {
             console.error('Error in getAllProperties:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to retrieve properties',
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
+            const errorResponse = ErrorBuilder.build(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                'Failed to retrieve properties'
+            );
+            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
         }
     }
 
@@ -112,27 +109,21 @@ export class PropertyController {
             const userId = req.user?.id;
 
             if (isNaN(id) || id <= 0) {
-                res.status(400).json({
-                    success: false,
-                    message: 'Invalid property ID'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.INVALID_FORMAT, 'Invalid property ID');
+                res.status(ERROR_STATUS_MAP[ErrorCode.INVALID_FORMAT]).json(errorResponse);
                 return;
             }
 
             if (!userId) {
-                res.status(401).json({
-                    success: false,
-                    message: 'User not authenticated'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.UNAUTHORIZED, 'User not authenticated');
+                res.status(ERROR_STATUS_MAP[ErrorCode.UNAUTHORIZED]).json(errorResponse);
                 return;
             }
 
             // Check if user owns the property (authorization)
             if (!await this.propertyApplicationService.authorizePropertyAccess(id, userId)) {
-                res.status(400).json({
-                    success: false,
-                    message: 'Access denied : you do not own this property'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.FORBIDDEN, 'Access denied: you do not own this property');
+                res.status(ERROR_STATUS_MAP[ErrorCode.FORBIDDEN]).json(errorResponse);
                 return;
             }
 
@@ -146,11 +137,11 @@ export class PropertyController {
             });
         } catch (error) {
             console.error('Error in updateProperty:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to update property',
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
+            const errorResponse = ErrorBuilder.build(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                'Failed to update property'
+            );
+            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
         }
     }
 
@@ -160,34 +151,27 @@ export class PropertyController {
             const userId = req.user?.id;
 
             if (isNaN(id) || id <= 0) {
-                res.status(400).json({
-                    success: false,
-                    message: 'Invalid property ID'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.INVALID_FORMAT, 'Invalid property ID');
+                res.status(ERROR_STATUS_MAP[ErrorCode.INVALID_FORMAT]).json(errorResponse);
                 return;
             }
 
             if (!userId) {
-                res.status(401).json({
-                    success: false,
-                    message: 'User not authenticated'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.UNAUTHORIZED, 'User not authenticated');
+                res.status(ERROR_STATUS_MAP[ErrorCode.UNAUTHORIZED]).json(errorResponse);
                 return;
             }
 
-            await this.propertyApplicationService.rejectProperty(id);
-
-            res.status(200).json({
-                success: true,
-                message: 'Property deleted successfully'
-            });
+            const serviceResponse = await this.propertyApplicationService.rejectProperty(id);
+            const statusCode = serviceResponse.success ? 200 : serviceResponse.error?.details?.httpStatus || 500;
+            res.status(statusCode).json(serviceResponse);
         } catch (error) {
             console.error('Error in deleteProperty:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to delete property',
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
+            const errorResponse = ErrorBuilder.build(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                'Failed to delete property'
+            );
+            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
         }
     }
 
@@ -197,36 +181,33 @@ export class PropertyController {
         try {
             const id = parseInt(req.params.id);
             const adminUserId = req.user?.id;
-
+    
             if (isNaN(id) || id <= 0) {
-                res.status(400).json({
-                    success: false,
-                    message: 'Invalid property ID'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.INVALID_FORMAT, 'Invalid property ID');
+                res.status(ERROR_STATUS_MAP[ErrorCode.INVALID_FORMAT]).json(errorResponse);
                 return;
             }
-
+            
             if (!adminUserId) {
-                res.status(401).json({
-                    success: false,
-                    message: 'User not authenticated'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.UNAUTHORIZED, 'User not authenticated');
+                res.status(ERROR_STATUS_MAP[ErrorCode.UNAUTHORIZED]).json(errorResponse);
                 return;
             }
+    
+            const serviceResponse = await this.propertyApplicationService.approveProperty(id);
 
-            const result = await this.propertyApplicationService.approveProperty(id);
-
-            res.status(200).json({
-                success: result.success,
-                message: result.message
-            });
+            const statusCode = serviceResponse.success
+            ? 200 
+            : serviceResponse.error?.details?.httpStatus || 500
+            
+            res.status(statusCode).json(serviceResponse);
         } catch (error) {
             console.error('Error in approveProperty:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to approve property',
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
+            const errorResponse = ErrorBuilder.build(
+                ErrorCode.INTERNAL_SERVER_ERROR, 
+                'Failed to approve property'
+            );
+            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
         }
     }
 
@@ -236,34 +217,27 @@ export class PropertyController {
             const adminUserId = req.user?.id;
 
             if (isNaN(id) || id <= 0) {
-                res.status(400).json({
-                    success: false,
-                    message: 'Invalid property ID'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.INVALID_FORMAT, 'Invalid property ID');
+                res.status(ERROR_STATUS_MAP[ErrorCode.INVALID_FORMAT]).json(errorResponse);
                 return;
             }
 
             if (!adminUserId) {
-                res.status(401).json({
-                    success: false,
-                    message: 'User not authenticated'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.UNAUTHORIZED, 'User not authenticated');
+                res.status(ERROR_STATUS_MAP[ErrorCode.UNAUTHORIZED]).json(errorResponse);
                 return;
             }
 
-            const result = await this.propertyApplicationService.rejectProperty(id);
-
-            res.status(200).json({
-                success: result.success,
-                message: result.message
-            });
+            const serviceResponse = await this.propertyApplicationService.rejectProperty(id);
+            const statusCode = serviceResponse.success ? 200 : serviceResponse.error?.details?.httpStatus || 500;
+            res.status(statusCode).json(serviceResponse);
         } catch (error) {
             console.error('Error in rejectProperty:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to reject property',
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
+            const errorResponse = ErrorBuilder.build(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                'Failed to reject property'
+            );
+            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
         }
     }
 
@@ -277,11 +251,11 @@ export class PropertyController {
             });
         } catch (error) {
             console.error('Error in getPropertyStatus:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to retrieve property status',
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
+            const errorResponse = ErrorBuilder.build(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                'Failed to retrieve property status'
+            );
+            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
         }
     }
 
@@ -295,11 +269,11 @@ export class PropertyController {
             });
         } catch (error) {
             console.error('Error in getApprovedProperties:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to retrieve approved properties',
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
+            const errorResponse = ErrorBuilder.build(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                'Failed to retrieve approved properties'
+            );
+            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
         }
     }
 
@@ -313,11 +287,11 @@ export class PropertyController {
             });
         } catch (error) {
             console.error('Error in getPendingProperties:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to retrieve pending properties',
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
+            const errorResponse = ErrorBuilder.build(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                'Failed to retrieve pending properties'
+            );
+            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
         }
     }
 
@@ -331,42 +305,32 @@ export class PropertyController {
             const coverImageIndex = parseInt(req.params.coverImageIndex);
 
             if (isNaN(propertyId) || propertyId <= 0) {
-                res.status(400).json({
-                    success: false,
-                    message: 'Invalid property ID'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.INVALID_FORMAT, 'Invalid property ID');
+                res.status(ERROR_STATUS_MAP[ErrorCode.INVALID_FORMAT]).json(errorResponse);
                 return;
             }
 
             if (isNaN(coverImageIndex) || coverImageIndex < 0) {
-                res.status(400).json({
-                    success: false,
-                    message: 'Invalid coverImageIndex ID'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.INVALID_FORMAT, 'Invalid coverImageIndex');
+                res.status(ERROR_STATUS_MAP[ErrorCode.INVALID_FORMAT]).json(errorResponse);
                 return;
             }
 
             if (!userId) {
-                res.status(401).json({
-                    success: false,
-                    message: 'User not authenticated'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.UNAUTHORIZED, 'User not authenticated');
+                res.status(ERROR_STATUS_MAP[ErrorCode.UNAUTHORIZED]).json(errorResponse);
                 return;
             }
 
             if (!files || files.length === 0) {
-                res.status(400).json({
-                    success: false,
-                    message: 'No files uploaded'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.MISSING_REQUIRED_FIELD, 'No files uploaded');
+                res.status(ERROR_STATUS_MAP[ErrorCode.MISSING_REQUIRED_FIELD]).json(errorResponse);
                 return;
             }
 
             if (!await this.propertyApplicationService.authorizePropertyAccess(propertyId, userId)) {
-                res.status(400).json({
-                    success: false,
-                    message: 'Access denied : you do not own this property'
-                });
+                const errorResponse = ErrorBuilder.build(ErrorCode.FORBIDDEN, 'Access denied: you do not own this property');
+                res.status(ERROR_STATUS_MAP[ErrorCode.FORBIDDEN]).json(errorResponse);
                 return;
             }
 
@@ -382,11 +346,11 @@ export class PropertyController {
             });
         } catch (error) {
             console.error('Error in uploadPhotos:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to upload photos',
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
+            const errorResponse = ErrorBuilder.build(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                'Failed to upload photos'
+            );
+            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
         }
     }
 
@@ -424,11 +388,11 @@ export class PropertyController {
             });
         } catch (error) {
             console.error('Error in getProjects:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to retrieve projects',
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
+            const errorResponse = ErrorBuilder.build(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                'Failed to retrieve projects'
+            );
+            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
         }
     }
 
@@ -442,11 +406,11 @@ export class PropertyController {
             });
         } catch (error) {
             console.error('Error in getRequiredInterfaces:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to retrieve required interfaces',
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
+            const errorResponse = ErrorBuilder.build(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                'Failed to retrieve required interfaces'
+            );
+            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
         }
     }
 

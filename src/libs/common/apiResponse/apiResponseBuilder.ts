@@ -13,6 +13,17 @@ export class ResponseBuilder {
     };
   }
 
+  static fail<T>(
+    data: T,
+    message = "Request failed"
+  ):ApiResponseInterface<T> {
+    return {
+      success: true,
+      message,
+      data
+    };
+  }
+
   static paginatedSuccess<T>(
     data: T[],
     pagination: PaginatedResponse<any>["pagination"],

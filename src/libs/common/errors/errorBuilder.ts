@@ -10,7 +10,6 @@ export class ErrorBuilder {
   ): ApiResponseInterface<T> {
     return {
       success: false,
-      message,
       error: {
         code,
         message,

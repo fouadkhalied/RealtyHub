@@ -13,6 +13,7 @@ export const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
     [ErrorCode.RESOURCE_NOT_FOUND]: 404,
     [ErrorCode.POST_NOT_FOUND]: 404,
     [ErrorCode.USER_NOT_FOUND]: 404,
+    [ErrorCode.PROPERTY_NOT_FOUND]: 404,
   
     [ErrorCode.DUPLICATE_ENTRY]: 409,
     [ErrorCode.CONFLICT]: 409,
