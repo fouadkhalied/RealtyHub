@@ -6,7 +6,7 @@ import { PostResponse } from "../../application/dto/responses/PostResponse.dto";
 import { PaginatedResponse, PaginationParams } from "../../../../libs/common/pagination.vo";
 import { PostListResponse } from "../../application/dto/responses/PostListResponse.dto";
 import { SearchRequest } from "../../application/dto/requests/SearchPostRequest.dto";
-import { READ_QUEIRES } from "../queries/BlogService/queries.read";
+import { READ_QUERIES } from "../queries/BlogService/queries.read";
 
 export class BlogRepositoryImplementation implements IBlogRepository {
     async create(postData: CreatePostRequest, adminId: number): Promise<{ id: number; message: string }> {
@@ -138,7 +138,7 @@ export class BlogRepositoryImplementation implements IBlogRepository {
 
     async findById(id: number): Promise<PostResponse | null> {
         try {
-            const result = await sql.query<PostResponse>(READ_QUEIRES.findById, [id]);
+            const result = await sql.query<PostResponse>(READ_QUERIES.findById, [id]);
             return result.rows[0] || null;
         } catch (error) {
             throw new Error(
@@ -152,7 +152,7 @@ export class BlogRepositoryImplementation implements IBlogRepository {
 
     async findBySlug(slug: string): Promise<PostResponse[] | null> {
         try {
-            const result = await sql.query<PostResponse>(READ_QUEIRES.findBySlug, [slug]);
+            const result = await sql.query<PostResponse>(READ_QUERIES.findBySlug, [slug]);
             return result.rows.length === 0 ? null : result.rows;
         } catch (error) {
             throw new Error(
@@ -173,12 +173,12 @@ export class BlogRepositoryImplementation implements IBlogRepository {
       
           // Get paginated data
           const postsResult = await sql.query<PostListResponse>(
-            READ_QUEIRES.findAll,
+            READ_QUERIES.findAll,
             [params.limit, offset]
           );
       
           // Get total count
-          const countResult = await sql.query<{ count: string }>(READ_QUEIRES.countAll);
+          const countResult = await sql.query<{ count: string }>(READ_QUERIES.countAll);
           const totalCount = parseInt(countResult.rows[0].count, 10);
       
           const totalPages = Math.ceil(totalCount / params.limit);

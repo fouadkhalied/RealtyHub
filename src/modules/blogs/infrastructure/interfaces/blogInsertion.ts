@@ -24,9 +24,6 @@ export interface BlogInsertQueries {
     // FAQ items insertion
     insertFaqItems: string;
     
-    // References insertion
-    insertReferences: string;
-    
     // Related posts insertion
     insertRelatedPosts: string;
   }

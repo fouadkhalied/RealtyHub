@@ -63,13 +63,6 @@ export const BLOG_INSERT_QUERIES: BlogInsertQueries = {
         content_section_id, question, answer, faq_order
       ) VALUES ($1, $2, $3, $4) RETURNING id;
     `,
-  
-    // Insert references - Already correct
-    insertReferences: `
-      INSERT INTO references (post_id, title, url)
-      VALUES ($1, $2, $3) RETURNING id;
-    `,
-  
     // Insert related posts - Already correct
     insertRelatedPosts: `
       INSERT INTO related_posts (
