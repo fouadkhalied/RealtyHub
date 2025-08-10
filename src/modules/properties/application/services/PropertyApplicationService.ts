@@ -13,6 +13,9 @@ import { CreatePropertyUseCase } from "../use-cases/CreateProperty.usecase";
 import { PropertyApprovalWorkflowUseCase } from "../use-cases/PropertyApprovalWorkflow.usecase";
 import { UploadPropertyPhotosUseCase } from "../use-cases/UploadPropertyPhotos.usecase";
 import { ApiResponseInterface } from "../../../../libs/common/apiResponse/interfaces/apiResponse.interface";
+import { ErrorBuilder } from "../../../../libs/common/errors/errorBuilder";
+import { ErrorCode } from "../../../../libs/common/errors/enums/basic.error.enum";
+import { ResponseBuilder } from "../../../../libs/common/apiResponse/apiResponseBuilder";
 
 export class PropertyApplicationService {
     constructor(
@@ -27,51 +30,104 @@ export class PropertyApplicationService {
 
     // ========== SIMPLE OPERATIONS (Direct Service Calls) ==========
     
-    async getPropertyById(id: number): Promise<EnhancedPropertyResult | null> {
+    async getPropertyById(id: number): Promise<ApiResponseInterface<EnhancedPropertyResult | null>> {
         const result = await this.propertyDomainService.getPropertyById(id);
-        return result ? enhancePropertyWithLocalization(result) : null;
+        
+        if (!result.success) {
+            return result as ApiResponseInterface<EnhancedPropertyResult | null>;
+        }
+
+        const enhancedProperty = result.data ? enhancePropertyWithLocalization(result.data) : null;
+        
+        return ResponseBuilder.success(enhancedProperty, result.message);
     }
 
-    async getAllProperties(page: number = 1, limit: number = 10): Promise<PaginatedResponse<PropertyListItem>> {
+    async getAllProperties(page: number = 1, limit: number = 10): Promise<ApiResponseInterface<PaginatedResponse<PropertyListItem>>> {
         const paginationParams = this.validatePaginationParams(page, limit);
-        const { properties, totalCount } = await this.propertyDomainService.getAllProperties(paginationParams);
-        return this.createPaginatedResponse(properties, totalCount, paginationParams);
+        const result = await this.propertyDomainService.getAllProperties(paginationParams);
+        
+        if (!result.success) {
+            return ErrorBuilder.build(ErrorCode.DATABASE_ERROR, result.message)
+        }
+
+        const { properties, totalCount } = result.data!;
+        const paginatedResponse = this.createPaginatedResponse(properties, totalCount, paginationParams);
+        
+        return ResponseBuilder.success(paginatedResponse, result.message);
     }
 
-    async updateProperty(id: number, data: Partial<CreatePropertyRequest>): Promise<void> {
-        return await this.propertyDomainService.updateProperty(id, data);
+    async updateProperty(id: number, data: Partial<CreatePropertyRequest>, userId?: number): Promise<ApiResponseInterface<void>> {
+        return await this.propertyDomainService.updateProperty(id, data as CreatePropertyRequest, userId);
     }
 
-    // async deleteProperty(id: number): Promise<void> {
-    //     return await this.propertyDomainService.deleteProperty(id);
-    // }
+    async deleteProperty(id: number, userId?: number): Promise<ApiResponseInterface<void>> {
+        return await this.propertyDomainService.deleteProperty(id, userId);
+    }
 
-    // async getPropertyTypes() {
+    // async getPropertyTypes(): Promise<ApiResponseInterface<PropertyType[]>> {
     //     return await this.propertyLookupService.getPropertyTypes();
     // }
 
-    async getProjects(page: number = 1, limit: number = 10): Promise<PaginatedResponse<ProjectWithDeveloperAndLocation>> {
+    async getProjects(page: number = 1, limit: number = 10): Promise<ApiResponseInterface<PaginatedResponse<ProjectWithDeveloperAndLocation>>> {
         const paginationParams = this.validatePaginationParams(page, limit);
-        const { projects, totalCount } = await this.propertyLookupService.getProjects(paginationParams);
-        return this.createPaginatedResponse(projects, totalCount, paginationParams);
+        
+        try {
+            const { projects, totalCount } = await this.propertyLookupService.getProjects(paginationParams);
+            const paginatedResponse = this.createPaginatedResponse(projects, totalCount, paginationParams);
+            
+            return ResponseBuilder.success(paginatedResponse, "Projects retrieved successfully");
+        } catch (error: any) {
+            return ErrorBuilder.build(
+                ErrorCode.DATABASE_ERROR,
+                "Failed to retrieve projects",
+                { originalError: error.message }
+            );
+        }
     }
 
-    async getPropertyStatus(): Promise<PropertyStatus> {
-        return await this.propertyApprovalService.getPropertyStatus();
+    async getPropertyStatus(): Promise<ApiResponseInterface<PropertyStatus>> {
+        try {
+            const status = await this.propertyApprovalService.getPropertyStatus();
+            return ResponseBuilder.success(status, "Property status retrieved successfully");
+        } catch (error: any) {
+            return ErrorBuilder.build(
+                ErrorCode.DATABASE_ERROR,
+                "Failed to retrieve property status",
+                { originalError: error.message }
+            );
+        }
     }
 
-    async getApprovedProperties(): Promise<number[]> {
-        return await this.propertyApprovalService.getApprovedProperties();
+    async getApprovedProperties(): Promise<ApiResponseInterface<number[]>> {
+        try {
+            const approvedProperties = await this.propertyApprovalService.getApprovedProperties();
+            return ResponseBuilder.success(approvedProperties, "Approved properties retrieved successfully");
+        } catch (error: any) {
+            return ErrorBuilder.build(
+                ErrorCode.DATABASE_ERROR,
+                "Failed to retrieve approved properties",
+                { originalError: error.message }
+            );
+        }
     }
 
-    async getPendingProperties(): Promise<number[]> {
-        return await this.propertyApprovalService.getPendingProperties();
+    async getPendingProperties(): Promise<ApiResponseInterface<number[]>> {
+        try {
+            const pendingProperties = await this.propertyApprovalService.getPendingProperties();
+            return ResponseBuilder.success(pendingProperties, "Pending properties retrieved successfully");
+        } catch (error: any) {
+            return ErrorBuilder.build(
+                ErrorCode.DATABASE_ERROR,
+                "Failed to retrieve pending properties",
+                { originalError: error.message }
+            );
+        }
     }
 
     // ========== COMPLEX OPERATIONS (Use Cases) ==========
     
-    async createProperty(props: CreatePropertyRequest, userId: number): Promise<number> {
-        return await this.createPropertyUseCase.execute(props, userId);
+    async createProperty(props: CreatePropertyRequest, userId: number): Promise<ApiResponseInterface<number>> {
+        return await this.propertyDomainService.createProperty(props, userId);
     }
 
     async approveProperty(propertyId: number): Promise<ApiResponseInterface<{PropertyId: number}>> {
@@ -82,18 +138,29 @@ export class PropertyApplicationService {
         return await this.approvalWorkflowUseCase.rejectProperty(propertyId);
     }
 
-    async uploadPhotos(propertyId: number, files: Express.Multer.File[], coverImageIndex: number): Promise<ServiceResult> { 
-        return await this.uploadPhotosUseCase.execute(propertyId,files,coverImageIndex);
+    async uploadPhotos(propertyId: number, files: Express.Multer.File[], coverImageIndex: number): Promise<ApiResponseInterface<ServiceResult>> {
+        try {
+            const result = await this.uploadPhotosUseCase.execute(propertyId, files, coverImageIndex);
+            return ResponseBuilder.success(result, "Photos uploaded successfully");
+        } catch (error: any) {
+            return ErrorBuilder.build(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                "Failed to upload photos",
+                { originalError: error.message }
+            );
+        }
     }
 
-    async getRequiredInterfaces() : Promise<any> {
-        return requiredInterfacesData
+    async getRequiredInterfaces(): Promise<ApiResponseInterface<any>> {
+        return ResponseBuilder.success(requiredInterfacesData, "Required interfaces retrieved successfully");
     }
 
-    // ========== Helper methods... ==========
-    async authorizePropertyAccess(propertyId: number, userId: number) : Promise<boolean> {
-        return await this.propertyDomainService.authorizePropertyAccess(propertyId,userId)
+    // ========== Helper methods ==========
+    
+    async authorizePropertyAccess(propertyId: number, userId: number): Promise<ApiResponseInterface<boolean>> {
+        return await this.propertyDomainService.authorizePropertyAccess(propertyId, userId);
     }
+
     private validatePaginationParams(page: number, limit: number): PaginationParams {
         const validPage = Math.max(1, Math.floor(page));
         const validLimit = Math.min(Math.max(1, Math.floor(limit)), 100);

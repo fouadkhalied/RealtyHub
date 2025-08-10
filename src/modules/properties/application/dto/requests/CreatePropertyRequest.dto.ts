@@ -1,6 +1,4 @@
 export interface CreatePropertyRequest {
-    userId: number;
-  
     priceAmount: number;
   
     bedrooms: number;

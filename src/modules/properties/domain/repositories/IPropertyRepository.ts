@@ -4,7 +4,7 @@ import { PropertyQueryResult } from "../../application/dto/responses/PropertyRes
 import { PaginationParams } from "../../../../libs/common/pagination.vo";
 
 export interface IPropertyRepository {
-    create(props: CreatePropertyRequest): Promise<number>;
+    create(props: CreatePropertyRequest, userId: number): Promise<number>;
     findById(id: number): Promise<PropertyQueryResult | null>;
     findAll(params: PaginationParams): Promise<{properties: PropertyListItem[], totalCount: number}>;
     update(id: number, props: Partial<CreatePropertyRequest>): Promise<void>;

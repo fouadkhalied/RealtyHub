@@ -4,7 +4,6 @@ import { CreatePropertyRequest } from '../../application/dto/requests/CreateProp
 import { ErrorBuilder } from '../../../../libs/common/errors/errorBuilder';
 import { ErrorCode } from '../../../../libs/common/errors/enums/basic.error.enum';
 import { ERROR_STATUS_MAP } from '../../../../libs/common/errors/mapper/mapperErrorEnum';
-//import { UpdatePropertyRequest } from '../../application/dto/requests/UpdatePropertyRequest.dto';
 
 interface AuthenticatedRequest extends Request {
     user?: {
@@ -24,75 +23,66 @@ export class PropertyController {
     async createProperty(req: AuthenticatedRequest, res: Response): Promise<void> {
         try {
             const userId = req.user?.id;
-            if (!userId) {
-                const errorResponse = ErrorBuilder.build(ErrorCode.UNAUTHORIZED, 'User not authenticated');
-                res.status(ERROR_STATUS_MAP[ErrorCode.UNAUTHORIZED]).json(errorResponse);
+
+            if (!userId || isNaN(userId) || userId <= 0) {
+                const err = ErrorBuilder.build(ErrorCode.INVALID_FORMAT, 'Invalid User ID');
+                res.status(ERROR_STATUS_MAP[ErrorCode.INVALID_FORMAT]).json(err);
                 return;
             }
 
-            const propertyData: CreatePropertyRequest = req.body;
-            
-            const result = await this.propertyApplicationService.createProperty(propertyData, userId);
+            const serviceResponse = await this.propertyApplicationService.createProperty(req.body, userId);
 
-            res.status(201).json({
-                success: true,
-                message: 'Property created successfully',
-                data: result
-            });
+            if (serviceResponse.success) {
+                res.status(201).json(serviceResponse);
+            } else {
+                const statusCode = serviceResponse.error?.details?.httpStatus || 500;
+                res.status(statusCode).json(serviceResponse);
+            }
         } catch (error) {
             console.error('Error in createProperty:', error);
-            const errorResponse = ErrorBuilder.build(
-                ErrorCode.INTERNAL_SERVER_ERROR,
-                'Failed to create property'
-            );
-            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
+            const err = ErrorBuilder.build(ErrorCode.INTERNAL_SERVER_ERROR, 'Failed to create property');
+            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(err);
         }
     }
 
     async getPropertyById(req: Request, res: Response): Promise<void> {
         try {
             const id = parseInt(req.params.id);
-            
+
             if (isNaN(id) || id <= 0) {
-                const errorResponse = ErrorBuilder.build(ErrorCode.INVALID_FORMAT, 'Invalid property ID');
-                res.status(ERROR_STATUS_MAP[ErrorCode.INVALID_FORMAT]).json(errorResponse);
+                const err = ErrorBuilder.build(ErrorCode.INVALID_FORMAT, 'Invalid property ID');
+                res.status(ERROR_STATUS_MAP[ErrorCode.INVALID_FORMAT]).json(err);
                 return;
             }
 
-            const property = await this.propertyApplicationService.getPropertyById(id);
+            const serviceResponse = await this.propertyApplicationService.getPropertyById(id);
 
-            if (!property) {
-                const errorResponse = ErrorBuilder.build(ErrorCode.PROPERTY_NOT_FOUND, 'Property not found');
-                res.status(ERROR_STATUS_MAP[ErrorCode.PROPERTY_NOT_FOUND]).json(errorResponse);
-                return;
+            if (serviceResponse.success) {
+                res.status(200).json(serviceResponse);
+            } else {
+                const statusCode = serviceResponse.error?.details?.httpStatus || 500;
+                res.status(statusCode).json(serviceResponse);
             }
-
-            res.status(200).json({
-                success: true,
-                data: property
-            });
         } catch (error) {
             console.error('Error in getPropertyById:', error);
-            const errorResponse = ErrorBuilder.build(
-                ErrorCode.INTERNAL_SERVER_ERROR,
-                'Failed to retrieve property'
-            );
-            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
+            const err = ErrorBuilder.build(ErrorCode.INTERNAL_SERVER_ERROR, 'Failed to retrieve property');
+            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(err);
         }
     }
-
+    
     async getAllProperties(req: Request, res: Response): Promise<void> {
         try {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
 
-            const result = await this.propertyApplicationService.getAllProperties(page, limit);
+            const serviceResponse = await this.propertyApplicationService.getAllProperties(page, limit);
 
-            res.status(200).json({
-                success: true,
-                data: result.data,
-                pagination: result.pagination
-            });
+            if (serviceResponse.success) {
+                res.status(200).json(serviceResponse);
+            } else {
+                const statusCode = serviceResponse.error?.details?.httpStatus || 500;
+                res.status(statusCode).json(serviceResponse);
+            }
         } catch (error) {
             console.error('Error in getAllProperties:', error);
             const errorResponse = ErrorBuilder.build(
@@ -121,20 +111,22 @@ export class PropertyController {
             }
 
             // Check if user owns the property (authorization)
-            if (!await this.propertyApplicationService.authorizePropertyAccess(id, userId)) {
+            const authResponse = await this.propertyApplicationService.authorizePropertyAccess(id, userId);
+            if (!authResponse.success || !authResponse.data) {
                 const errorResponse = ErrorBuilder.build(ErrorCode.FORBIDDEN, 'Access denied: you do not own this property');
                 res.status(ERROR_STATUS_MAP[ErrorCode.FORBIDDEN]).json(errorResponse);
                 return;
             }
 
             const updateData: Partial<CreatePropertyRequest> = req.body;
-            
-            await this.propertyApplicationService.updateProperty(id, updateData);
+            const serviceResponse = await this.propertyApplicationService.updateProperty(id, updateData, userId);
 
-            res.status(200).json({
-                success: true,
-                message: 'Property updated successfully'
-            });
+            if (serviceResponse.success) {
+                res.status(200).json(serviceResponse);
+            } else {
+                const statusCode = serviceResponse.error?.details?.httpStatus || 500;
+                res.status(statusCode).json(serviceResponse);
+            }
         } catch (error) {
             console.error('Error in updateProperty:', error);
             const errorResponse = ErrorBuilder.build(
@@ -162,9 +154,22 @@ export class PropertyController {
                 return;
             }
 
-            const serviceResponse = await this.propertyApplicationService.rejectProperty(id);
-            const statusCode = serviceResponse.success ? 200 : serviceResponse.error?.details?.httpStatus || 500;
-            res.status(statusCode).json(serviceResponse);
+            // Check if user owns the property (authorization)
+            const authResponse = await this.propertyApplicationService.authorizePropertyAccess(id, userId);
+            if (!authResponse.success || !authResponse.data) {
+                const errorResponse = ErrorBuilder.build(ErrorCode.FORBIDDEN, 'Access denied: you do not own this property');
+                res.status(ERROR_STATUS_MAP[ErrorCode.FORBIDDEN]).json(errorResponse);
+                return;
+            }
+
+            const serviceResponse = await this.propertyApplicationService.deleteProperty(id, userId);
+            
+            if (serviceResponse.success) {
+                res.status(200).json(serviceResponse);
+            } else {
+                const statusCode = serviceResponse.error?.details?.httpStatus || 500;
+                res.status(statusCode).json(serviceResponse);
+            }
         } catch (error) {
             console.error('Error in deleteProperty:', error);
             const errorResponse = ErrorBuilder.build(
@@ -196,11 +201,12 @@ export class PropertyController {
     
             const serviceResponse = await this.propertyApplicationService.approveProperty(id);
 
-            const statusCode = serviceResponse.success
-            ? 200 
-            : serviceResponse.error?.details?.httpStatus || 500
-            
-            res.status(statusCode).json(serviceResponse);
+            if (serviceResponse.success) {
+                res.status(200).json(serviceResponse);
+            } else {
+                const statusCode = serviceResponse.error?.details?.httpStatus || 500;
+                res.status(statusCode).json(serviceResponse);
+            }
         } catch (error) {
             console.error('Error in approveProperty:', error);
             const errorResponse = ErrorBuilder.build(
@@ -229,8 +235,13 @@ export class PropertyController {
             }
 
             const serviceResponse = await this.propertyApplicationService.rejectProperty(id);
-            const statusCode = serviceResponse.success ? 200 : serviceResponse.error?.details?.httpStatus || 500;
-            res.status(statusCode).json(serviceResponse);
+            
+            if (serviceResponse.success) {
+                res.status(200).json(serviceResponse);
+            } else {
+                const statusCode = serviceResponse.error?.details?.httpStatus || 500;
+                res.status(statusCode).json(serviceResponse);
+            }
         } catch (error) {
             console.error('Error in rejectProperty:', error);
             const errorResponse = ErrorBuilder.build(
@@ -243,12 +254,14 @@ export class PropertyController {
 
     async getPropertyStatus(req: Request, res: Response): Promise<void> {
         try {
-            const status = await this.propertyApplicationService.getPropertyStatus();
+            const serviceResponse = await this.propertyApplicationService.getPropertyStatus();
 
-            res.status(200).json({
-                success: true,
-                data: status
-            });
+            if (serviceResponse.success) {
+                res.status(200).json(serviceResponse);
+            } else {
+                const statusCode = serviceResponse.error?.details?.httpStatus || 500;
+                res.status(statusCode).json(serviceResponse);
+            }
         } catch (error) {
             console.error('Error in getPropertyStatus:', error);
             const errorResponse = ErrorBuilder.build(
@@ -261,12 +274,14 @@ export class PropertyController {
 
     async getApprovedProperties(req: Request, res: Response): Promise<void> {
         try {
-            const approvedIds = await this.propertyApplicationService.getApprovedProperties();
+            const serviceResponse = await this.propertyApplicationService.getApprovedProperties();
 
-            res.status(200).json({
-                success: true,
-                data: approvedIds
-            });
+            if (serviceResponse.success) {
+                res.status(200).json(serviceResponse);
+            } else {
+                const statusCode = serviceResponse.error?.details?.httpStatus || 500;
+                res.status(statusCode).json(serviceResponse);
+            }
         } catch (error) {
             console.error('Error in getApprovedProperties:', error);
             const errorResponse = ErrorBuilder.build(
@@ -279,12 +294,14 @@ export class PropertyController {
 
     async getPendingProperties(req: Request, res: Response): Promise<void> {
         try {
-            const pendingIds = await this.propertyApplicationService.getPendingProperties();
+            const serviceResponse = await this.propertyApplicationService.getPendingProperties();
 
-            res.status(200).json({
-                success: true,
-                data: pendingIds
-            });
+            if (serviceResponse.success) {
+                res.status(200).json(serviceResponse);
+            } else {
+                const statusCode = serviceResponse.error?.details?.httpStatus || 500;
+                res.status(statusCode).json(serviceResponse);
+            }
         } catch (error) {
             console.error('Error in getPendingProperties:', error);
             const errorResponse = ErrorBuilder.build(
@@ -328,22 +345,26 @@ export class PropertyController {
                 return;
             }
 
-            if (!await this.propertyApplicationService.authorizePropertyAccess(propertyId, userId)) {
+            // Check if user owns the property (authorization)
+            const authResponse = await this.propertyApplicationService.authorizePropertyAccess(propertyId, userId);
+            if (!authResponse.success || !authResponse.data) {
                 const errorResponse = ErrorBuilder.build(ErrorCode.FORBIDDEN, 'Access denied: you do not own this property');
                 res.status(ERROR_STATUS_MAP[ErrorCode.FORBIDDEN]).json(errorResponse);
                 return;
             }
 
-            const result = await this.propertyApplicationService.uploadPhotos(
+            const serviceResponse = await this.propertyApplicationService.uploadPhotos(
                 propertyId, 
                 files, 
                 coverImageIndex
             );
 
-            res.status(200).json({
-                success: result.success,
-                message: result.message
-            });
+            if (serviceResponse.success) {
+                res.status(200).json(serviceResponse);
+            } else {
+                const statusCode = serviceResponse.error?.details?.httpStatus || 500;
+                res.status(statusCode).json(serviceResponse);
+            }
         } catch (error) {
             console.error('Error in uploadPhotos:', error);
             const errorResponse = ErrorBuilder.build(
@@ -356,54 +377,36 @@ export class PropertyController {
 
     // ============= LOOKUP OPERATIONS =============
 
-    // async getPropertyTypes(req: Request, res: Response): Promise<void> {
-    //     try {
-    //         const propertyTypes = await this.propertyApplicationService.();
-
-    //         res.status(200).json({
-    //             success: true,
-    //             data: propertyTypes
-    //         });
-    //     } catch (error) {
-    //         console.error('Error in getPropertyTypes:', error);
-    //         res.status(500).json({
-    //             success: false,
-    //             message: 'Failed to retrieve property types',
-    //             error: error instanceof Error ? error.message : 'Unknown error'
-    //         });
-    //     }
-    // }
-
     async getProjects(req: Request, res: Response): Promise<void> {
         try {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
 
-            const result = await this.propertyApplicationService.getProjects(page, limit);
+            const serviceResponse = await this.propertyApplicationService.getProjects(page, limit);
 
-            res.status(200).json({
-                success: true,
-                data: result.data,
-                pagination: result.pagination
-            });
+            if (serviceResponse.success) {
+                res.status(200).json(serviceResponse);
+            } else {
+                const statusCode = serviceResponse.error?.details?.httpStatus || 500;
+                res.status(statusCode).json(serviceResponse);
+            }
         } catch (error) {
             console.error('Error in getProjects:', error);
-            const errorResponse = ErrorBuilder.build(
-                ErrorCode.INTERNAL_SERVER_ERROR,
-                'Failed to retrieve projects'
-            );
-            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
+            const err = ErrorBuilder.build(ErrorCode.INTERNAL_SERVER_ERROR, 'Failed to retrieve projects');
+            res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(err);
         }
     }
 
     async getRequiredInterfaces(req: Request, res: Response): Promise<void> {
         try {
-            const interfaces = await this.propertyApplicationService.getRequiredInterfaces();
+            const serviceResponse = await this.propertyApplicationService.getRequiredInterfaces();
 
-            res.status(200).json({
-                success: true,
-                data: interfaces
-            });
+            if (serviceResponse.success) {
+                res.status(200).json(serviceResponse);
+            } else {
+                const statusCode = serviceResponse.error?.details?.httpStatus || 500;
+                res.status(statusCode).json(serviceResponse);
+            }
         } catch (error) {
             console.error('Error in getRequiredInterfaces:', error);
             const errorResponse = ErrorBuilder.build(
@@ -413,15 +416,6 @@ export class PropertyController {
             res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(errorResponse);
         }
     }
-
-    async validatePropertyOwnership(propertyId: number, userId: number): Promise<boolean> {
-        try {
-            return await this.propertyApplicationService.authorizePropertyAccess(propertyId, userId);
-        } catch (error) {
-            console.error('Error validating property ownership:', error);
-            return false;
-        }
-    };
 
     // ============= HELPER METHODS =============
 

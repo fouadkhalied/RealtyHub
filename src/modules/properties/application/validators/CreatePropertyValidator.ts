@@ -3,7 +3,6 @@ import { ListingType_EN } from '../../domain/enum/listingType.enum';
 import { STATE_EN } from '../../domain/enum/state.enum';
 
 export const PropertySchema = Joi.object({
-  userId: Joi.number().integer().required(),
   priceAmount: Joi.number().positive().required(),
   bedrooms: Joi.number().integer().min(0).required(),
   bathrooms: Joi.number().integer().min(0).required(),

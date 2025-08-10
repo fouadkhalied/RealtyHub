@@ -18,7 +18,7 @@ export class ResponseBuilder {
     message = "Request failed"
   ):ApiResponseInterface<T> {
     return {
-      success: true,
+      success: false,
       message,
       data
     };
