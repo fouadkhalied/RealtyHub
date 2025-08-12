@@ -21,10 +21,10 @@ async create(postData: CreatePostRequest, adminId: number): Promise<{ id: number
 
         const { 
             slug, 
-            title_ar,
-            title_en, 
-            summary_ar,
-            summary_en, 
+            titleAr,
+            titleEn, 
+            summaryAr,
+            summaryEn, 
             featuredImageUrl, 
             status, 
             ar,
@@ -34,10 +34,10 @@ async create(postData: CreatePostRequest, adminId: number): Promise<{ id: number
         // Insert main post with multilingual fields
         const postResult = await client.query(WRITE_QUERIES.insertPost, [
             slug, 
-            title_ar,
-            title_en, 
-            summary_ar || null,
-            summary_en || null, 
+            titleAr,
+            titleAr, 
+            summaryAr || null,
+            summaryEn || null, 
             adminId, 
             featuredImageUrl || null, 
             status || 'draft',

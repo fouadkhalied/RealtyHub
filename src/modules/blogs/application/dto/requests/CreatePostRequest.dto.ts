@@ -2,10 +2,10 @@ import { CreateCategoryRequest, CreateContentSectionRequest, CreateFaqItemReques
 
 export interface CreatePostRequest {
     slug: string;
-    title_ar: string;
-    title_en: string;
-    summary_ar?: string;
-    summary_en?: string;
+    titleAr: string;
+    titleEn: string;
+    summaryAr?: string;
+    summaryEn?: string;
     featuredImageUrl?: string;
     status?: 'draft' | 'published';
     published_at?: string;

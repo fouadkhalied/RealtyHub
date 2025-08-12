@@ -12,11 +12,11 @@ export const validatePostCreation = Joi.object({
       'string.pattern.base': 'Slug must contain only lowercase letters, numbers, and hyphens',
     }),
 
-  title_ar: Joi.string().min(1).max(500).required(),
-  title_en: Joi.string().min(1).max(500).required(),
+  titleAr: Joi.string().min(1).max(500).required(),
+  titleEn: Joi.string().min(1).max(500).required(),
 
-  summary_ar: Joi.string().max(1000).optional(),
-  summary_en: Joi.string().max(1000).optional(),
+  summaryAr: Joi.string().max(1000).optional(),
+  summaryEn: Joi.string().max(1000).optional(),
 
   featuredImageUrl: Joi.string().uri().optional(),
 

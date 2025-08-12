@@ -7,33 +7,33 @@ export const READ_QUERIES = {
       SELECT 
     p.id,
     p.slug,
-    p.title_ar,
-    p.title_en,
-    p.summary_ar,
-    p.summary_en,
+    p.title_ar as "titleAr",
+    p.title_en as "titleEn",
+    p.summary_ar as "summaryAr",
+    p.summary_en as "summaryEn",
     p.featured_image_url AS "featuredImageUrl",
     p.status,
     json_build_object('id', u.id, 'username', u.username) AS author,
     
     -- Arabic content
     json_build_object(
-        'content_sections', COALESCE(
+        'contentSections', COALESCE(
             (
                 SELECT json_agg(
                     json_build_object(
                         'id', cs.id,
-                        'section_order', cs.section_order,
+                        'sectionOrder', cs.section_order,
                         'heading', cs.heading_ar,
                         'body', cs.body_ar,
-                        'section_type', cs.section_type,
-                        'faq_items', COALESCE(
+                        'sectionType', cs.section_type,
+                        'faqItems', COALESCE(
                             (
                                 SELECT json_agg(
                                     json_build_object(
                                         'id', fi.id,
                                         'question', fi.question_ar,
                                         'answer', fi.answer_ar,
-                                        'faq_order', fi.faq_order
+                                        'faqOrder', fi.faq_order
                                     )
                                 )
                                 FROM faq_items fi
@@ -75,42 +75,27 @@ export const READ_QUERIES = {
                 WHERE pt.post_id = p.id
             ), '[]'::json
         ),
-        'table_of_contents', COALESCE(
+        'tableOfContents', COALESCE(
             (
                 SELECT json_agg(
                     json_build_object(
                         'id', toc.id,
                         'heading', toc.heading_ar,
-                        'toc_order', toc.toc_order
+                        'tocOrder', toc.toc_order
                     )
                 )
                 FROM table_of_contents toc
                 WHERE toc.post_id = p.id
             ), '[]'::json
         ),
-        'faq_items', COALESCE(
-            (
-                SELECT json_agg(
-                    json_build_object(
-                        'id', fi.id,
-                        'question', fi.question_ar,
-                        'answer', fi.answer_ar,
-                        'faq_order', fi.faq_order
-                    )
-                )
-                FROM faq_items fi
-                JOIN content_sections cs ON fi.content_section_id = cs.id
-                WHERE cs.post_id = p.id
-            ), '[]'::json
-        ),
-        'related_posts', COALESCE(
+        'relatedPosts', COALESCE(
             (
                 SELECT json_agg(
                     json_build_object(
                         'id', rp.id,
-                        'related_post_title', rp.related_post_title_ar,
-                        'related_post_slug', rp.related_post_slug,
-                        'relevance_order', rp.relevance_order
+                        'relatedPostTitle', rp.related_post_title_ar,
+                        'relatedPostSlug', rp.related_post_slug,
+                        'relevanceOrder', rp.relevance_order
                     )
                 )
                 FROM related_posts rp
@@ -121,23 +106,23 @@ export const READ_QUERIES = {
     
     -- English content
     json_build_object(
-        'content_sections', COALESCE(
+        'contentSections', COALESCE(
             (
                 SELECT json_agg(
                     json_build_object(
                         'id', cs.id,
-                        'section_order', cs.section_order,
+                        'sectionOrder', cs.section_order,
                         'heading', cs.heading_en,
                         'body', cs.body_en,
-                        'section_type', cs.section_type,
-                        'faq_items', COALESCE(
+                        'sectionType', cs.section_type,
+                        'faqItems', COALESCE(
                             (
                                 SELECT json_agg(
                                     json_build_object(
                                         'id', fi.id,
                                         'question', fi.question_en,
                                         'answer', fi.answer_en,
-                                        'faq_order', fi.faq_order
+                                        'faqOrder', fi.faq_order
                                     )
                                 )
                                 FROM faq_items fi
@@ -179,42 +164,27 @@ export const READ_QUERIES = {
                 WHERE pt.post_id = p.id
             ), '[]'::json
         ),
-        'table_of_contents', COALESCE(
+        'tableOfContents', COALESCE(
             (
                 SELECT json_agg(
                     json_build_object(
                         'id', toc.id,
                         'heading', toc.heading_en,
-                        'toc_order', toc.toc_order
+                        'tocOrder', toc.toc_order
                     )
                 )
                 FROM table_of_contents toc
                 WHERE toc.post_id = p.id
             ), '[]'::json
         ),
-        'faq_items', COALESCE(
-            (
-                SELECT json_agg(
-                    json_build_object(
-                        'id', fi.id,
-                        'question', fi.question_en,
-                        'answer', fi.answer_en,
-                        'faq_order', fi.faq_order
-                    )
-                )
-                FROM faq_items fi
-                JOIN content_sections cs ON fi.content_section_id = cs.id
-                WHERE cs.post_id = p.id
-            ), '[]'::json
-        ),
-        'related_posts', COALESCE(
+        'relatedPosts', COALESCE(
             (
                 SELECT json_agg(
                     json_build_object(
                         'id', rp.id,
-                        'related_post_title', rp.related_post_title_en,
-                        'related_post_slug', rp.related_post_slug,
-                        'relevance_order', rp.relevance_order
+                        'relatedPostTitle', rp.related_post_title_en,
+                        'relatedPostSlug', rp.related_post_slug,
+                        'relevanceOrder', rp.relevance_order
                     )
                 )
                 FROM related_posts rp
@@ -271,18 +241,18 @@ WHERE p.status = 'published' AND p.id = $1;
                 SELECT json_agg(
                     json_build_object(
                         'id', cs.id,
-                        'section_order', cs.section_order,
+                        'sectionOrder', cs.section_order,
                         'heading', cs.heading,
                         'body', cs.body,
-                        'section_type', cs.section_type,
-                        'faq_items', COALESCE(
+                        'sectionType', cs.section_type,
+                        'faqItems', COALESCE(
                             (
                                 SELECT json_agg(
                                     json_build_object(
                                         'id', fi.id,
                                         'question', fi.question,
                                         'answer', fi.answer,
-                                        'faq_order', fi.faq_order
+                                        'faqOrder', fi.faq_order
                                     )
                                 )
                                 FROM faq_items fi
@@ -294,34 +264,34 @@ WHERE p.status = 'published' AND p.id = $1;
                 FROM content_sections cs
                 WHERE cs.post_id = p.id
             ), '[]'::json
-        ) AS content_sections,
+        ) AS "contentSections",
         COALESCE(
             (
                 SELECT json_agg(
                     json_build_object(
                         'id', toc.id,
                         'heading', toc.heading,
-                        'toc_order', toc.toc_order
+                        'tocOrder', toc.toc_order
                     )
                 )
                 FROM table_of_contents toc
                 WHERE toc.post_id = p.id
             ), '[]'::json
-        ) AS table_of_contents,
+        ) AS "tableOfContents",
         COALESCE(
             (
                 SELECT json_agg(
                     json_build_object(
                         'id', rp.id,
-                        'related_post_title', rp.related_post_title,
-                        'related_post_slug', rp.related_post_slug,
-                        'relevance_order', rp.relevance_order
+                        'relatedPostTitle', rp.related_post_title,
+                        'relatedPostSlug', rp.related_post_slug,
+                        'relevanceOrder', rp.relevance_order
                     )
                 )
                 FROM related_posts rp
                 WHERE rp.post_id = p.id
             ), '[]'::json
-        ) AS related_posts
+        ) AS "relatedPosts"
       FROM posts p
       JOIN users u ON p.author_id = u.id
       WHERE p.status = 'published' AND p.slug ILIKE '%' || $1 || '%';
