@@ -1,141 +1,250 @@
 import { db, sql } from "@vercel/postgres";
 import { CreatePostRequest } from "../../application/dto/requests/CreatePostRequest.dto";
 import { IBlogRepository } from "../../domain/repositories/IBlogRepository";
-import { BLOG_INSERT_QUERIES } from "../queries/BlogService/queries.write";
+import { WRITE_QUERIES } from "../queries/BlogService/queries.write";
 import { PostResponse } from "../../application/dto/responses/PostResponse.dto";
 import { PaginatedResponse, PaginationParams } from "../../../../libs/common/pagination.vo";
 import { PostListResponse } from "../../application/dto/responses/PostListResponse.dto";
 import { SearchRequest } from "../../application/dto/requests/SearchPostRequest.dto";
 import { READ_QUERIES } from "../queries/BlogService/queries.read";
+import { DELETE_QUIRES } from "../queries/BlogService/quires.delete";
+import { UPDATE_QUERIES } from "../queries/BlogService/queries.update";
+import { CategoryUpdatePayload, ContentSectionUpdatePayload, FaqItemUpdatePayload, RelatedPostUpdatePayload, TableOfContentUpdatePayload, TagUpdatePayload } from "../../application/interfaces/blog.interface";
 
 export class BlogRepositoryImplementation implements IBlogRepository {
-    async create(postData: CreatePostRequest, adminId: number): Promise<{ id: number; message: string }> {
-        const client = await db.connect();
-        try {
-            await client.sql`BEGIN`;
+    
+// Updated create function
+async create(postData: CreatePostRequest, adminId: number): Promise<{ id: number; message: string }> {
+    const client = await db.connect();
+    try {
+        await client.sql`BEGIN`;
 
-            const { 
-                slug, 
-                title, 
-                summary, 
-                featuredImageUrl, 
-                status, 
-                contentSections, 
-                categories, 
-                tags, 
-                tableOfContents, 
-                faqItems,
-                relatedPosts 
-            } = postData;
+        const { 
+            slug, 
+            title_ar,
+            title_en, 
+            summary_ar,
+            summary_en, 
+            featuredImageUrl, 
+            status, 
+            ar,
+            en
+        } = postData;
 
-            // Insert main post
-            const postResult = await client.query(BLOG_INSERT_QUERIES.insertPost, [
-                slug, 
-                title, 
-                summary, 
-                adminId, 
-                featuredImageUrl, 
-                status
-            ]);
-            
-            const post_id = postResult.rows[0].post_id;
+        // Insert main post with multilingual fields
+        const postResult = await client.query(WRITE_QUERIES.insertPost, [
+            slug, 
+            title_ar,
+            title_en, 
+            summary_ar || null,
+            summary_en || null, 
+            adminId, 
+            featuredImageUrl || null, 
+            status || 'draft',
+            'en' // Default language for backward compatibility
+        ]);
+        
+        const post_id = postResult.rows[0].post_id;
 
-            if (!post_id) {
-                throw new Error("Error occurred while retrieving post id");
-            }
-
-            // Insert content sections and get their IDs
-            const contentSectionInserts = await Promise.all(
-                contentSections.map((ele) =>
-                    client.query(BLOG_INSERT_QUERIES.insertContentSections, [
-                        post_id,
-                        ele.sectionOrder,
-                        ele.heading,
-                        ele.body,
-                        ele.sectionType,
-                    ])
-                )
-            );
-            const contentSectionIds = contentSectionInserts.map((result) => result.rows[0].id);
-
-            // Insert categories and get their IDs
-            const categoryInserts = await Promise.all(
-                categories.map((ele) =>
-                    client.query(BLOG_INSERT_QUERIES.insertCategories, [
-                        ele.name, 
-                        ele.slug, 
-                        ele.description
-                    ])
-                )
-            );
-            const categoryIds = categoryInserts.map((result) => result.rows[0].id);
-
-            // Link posts to categories
-            await Promise.all(
-                categoryIds.map((categoryId) =>
-                    client.query(BLOG_INSERT_QUERIES.insertPostCategories, [post_id, categoryId])
-                )
-            );
-
-            // Insert tags and get their IDs
-            const tagInserts = await Promise.all(
-                tags.map((ele) =>
-                    client.query(BLOG_INSERT_QUERIES.insertTags, [ele.name, ele.slug])
-                )
-            );
-            const tagIds = tagInserts.map((result) => result.rows[0].id);
-
-            // Link posts to tags
-            await Promise.all(
-                tagIds.map((tagId) =>
-                    client.query(BLOG_INSERT_QUERIES.insertPostTags, [post_id, tagId])
-                )
-            );
-
-            // Insert table of contents
-            await Promise.all(
-                tableOfContents.map((ele) =>
-                    client.query(BLOG_INSERT_QUERIES.insertTableOfContents, [
-                        post_id,
-                        ele.heading,
-                        ele.tocOrder,
-                    ])
-                )
-            );
-
-            // Insert FAQ items (linked to content sections by index)
-            await Promise.all(
-                faqItems.map((ele, index) => {
-                    // Make sure we have a corresponding content section
-                    if (index < contentSectionIds.length) {
-                        return client.query(BLOG_INSERT_QUERIES.insertFaqItems, [
-                            contentSectionIds[index], 
-                            ele.question, 
-                            ele.answer, 
-                            ele.faqOrder
-                        ]);
-                    }
-                    return Promise.resolve(); // Skip if no corresponding section
-                })
-            );
-
-            // Insert realted posts
-            await Promise.all(
-                relatedPosts.map((ele)=>{
-                    client.query(BLOG_INSERT_QUERIES.insertRelatedPosts, [post_id, ele.relatedPostTitle, ele.relatedPostSlug, ele.relevanceOrder])
-                })
-            )
-
-            await client.sql`COMMIT`;
-            return { id: post_id, message: "Post created successfully" };
-        } catch (error) {
-            await client.sql`ROLLBACK`;
-            throw new Error(`Failed to create post: ${error instanceof Error ? error.message : "Unknown error"}`);
-        } finally {
-            client.release();
+        if (!post_id) {
+            throw new Error("Error occurred while retrieving post id");
         }
-    }
 
+        // Insert content sections by matching section orders (avoiding duplicates)
+        const uniqueSectionOrders = [...new Set([
+            ...ar.contentSections.map(s => s.sectionOrder),
+            ...en.contentSections.map(s => s.sectionOrder)
+        ])].sort((a, b) => a - b);
+
+        const contentSectionInserts = await Promise.all(
+            uniqueSectionOrders.map((sectionOrder) => {
+                const arSection = ar.contentSections.find(s => s.sectionOrder === sectionOrder);
+                const enSection = en.contentSections.find(s => s.sectionOrder === sectionOrder);
+
+                return client.query(WRITE_QUERIES.insertContentSections, [
+                    post_id,
+                    sectionOrder,
+                    arSection?.heading || null, // heading_ar
+                    enSection?.heading || null, // heading_en
+                    arSection?.body || null,    // body_ar
+                    enSection?.body || null,    // body_en
+                    arSection?.sectionType || enSection?.sectionType || 'text',
+                ]);
+            })
+        );
+        const contentSectionIds = contentSectionInserts.map((result) => result.rows[0].id);
+
+        // Merge and deduplicate categories by slug
+        const allCategories = [...ar.categories, ...en.categories];
+        const uniqueCategories = allCategories.reduce((acc, category) => {
+            const existing = acc.find(c => c.slug === category.slug);
+            if (existing) {
+                // Merge Arabic and English data
+                if (ar.categories.some(c => c.slug === category.slug)) {
+                    existing.name_ar = category.name;
+                    existing.description_ar = category.description;
+                } else {
+                    existing.name_en = category.name;
+                    existing.description_en = category.description;
+                }
+            } else {
+                // Create new entry
+                const isArabic = ar.categories.some(c => c.slug === category.slug);
+                acc.push({
+                    slug: category.slug,
+                    name_ar: isArabic ? category.name : null,
+                    name_en: isArabic ? null : category.name,
+                    description_ar: isArabic ? category.description : null,
+                    description_en: isArabic ? null : category.description
+                });
+            }
+            return acc;
+        }, [] as any[]);
+
+        // Insert categories with multilingual data
+        const categoryInserts = await Promise.all(
+            uniqueCategories.map((category) =>
+                client.query(WRITE_QUERIES.insertCategories, [
+                    category.name_ar,
+                    category.name_en, 
+                    category.slug, 
+                    category.description_ar,
+                    category.description_en
+                ])
+            )
+        );
+        const categoryIds = categoryInserts.map((result) => result.rows[0].id);
+
+        // Link posts to categories
+        await Promise.all(
+            categoryIds.map((categoryId) =>
+                client.query(WRITE_QUERIES.insertPostCategories, [post_id, categoryId])
+            )
+        );
+
+        // Merge and deduplicate tags by slug
+        const allTags = [...ar.tags, ...en.tags];
+        const uniqueTags = allTags.reduce((acc, tag) => {
+            const existing = acc.find(t => t.slug === tag.slug);
+            if (existing) {
+                // Merge Arabic and English data
+                if (ar.tags.some(t => t.slug === tag.slug)) {
+                    existing.name_ar = tag.name;
+                } else {
+                    existing.name_en = tag.name;
+                }
+            } else {
+                // Create new entry
+                const isArabic = ar.tags.some(t => t.slug === tag.slug);
+                acc.push({
+                    slug: tag.slug,
+                    name_ar: isArabic ? tag.name : null,
+                    name_en: isArabic ? null : tag.name
+                });
+            }
+            return acc;
+        }, [] as any[]);
+
+        // Insert tags with multilingual data
+        const tagInserts = await Promise.all(
+            uniqueTags.map((tag) =>
+                client.query(WRITE_QUERIES.insertTags, [
+                    tag.name_ar,
+                    tag.name_en, 
+                    tag.slug
+                ])
+            )
+        );
+        const tagIds = tagInserts.map((result) => result.rows[0].id);
+
+        // Link posts to tags
+        await Promise.all(
+            tagIds.map((tagId) =>
+                client.query(WRITE_QUERIES.insertPostTags, [post_id, tagId])
+            )
+        );
+
+        // Insert table of contents - merge by tocOrder
+        const uniqueTocOrders = [...new Set([
+            ...ar.tableOfContents.map(t => t.tocOrder),
+            ...en.tableOfContents.map(t => t.tocOrder)
+        ])].sort((a, b) => a - b);
+
+        if (uniqueTocOrders.length > 0) {
+            await Promise.all(
+                uniqueTocOrders.map((tocOrder) => {
+                    const arToc = ar.tableOfContents.find(t => t.tocOrder === tocOrder);
+                    const enToc = en.tableOfContents.find(t => t.tocOrder === tocOrder);
+
+                    return client.query(WRITE_QUERIES.insertTableOfContents, [
+                        post_id,
+                        arToc?.heading || null, // heading_ar
+                        enToc?.heading || null, // heading_en
+                        tocOrder,
+                    ]);
+                })
+            );
+        }
+
+        // Insert FAQ items - merge by faqOrder and link to content sections
+        const uniqueFaqOrders = [...new Set([
+            ...ar.faqItems.map(f => f.faqOrder),
+            ...en.faqItems.map(f => f.faqOrder)
+        ])].sort((a, b) => a - b);
+
+        if (uniqueFaqOrders.length > 0 && contentSectionIds.length > 0) {
+            await Promise.all(
+                uniqueFaqOrders.map((faqOrder) => {
+                    const arFaq = ar.faqItems.find(f => f.faqOrder === faqOrder);
+                    const enFaq = en.faqItems.find(f => f.faqOrder === faqOrder);
+
+                    // Link to first available content section (you might want to adjust this logic)
+                    const contentSectionId = contentSectionIds[0];
+
+                    return client.query(WRITE_QUERIES.insertFaqItems, [
+                        contentSectionId,
+                        arFaq?.question || null, // question_ar
+                        enFaq?.question || null, // question_en
+                        arFaq?.answer || null,   // answer_ar
+                        enFaq?.answer || null,   // answer_en
+                        faqOrder
+                    ]);
+                })
+            );
+        }
+
+        // Insert related posts - merge by relevanceOrder
+        const uniqueRelevanceOrders = [...new Set([
+            ...ar.relatedPosts.map(r => r.relevanceOrder),
+            ...en.relatedPosts.map(r => r.relevanceOrder)
+        ])].sort((a, b) => a - b);
+
+        if (uniqueRelevanceOrders.length > 0) {
+            await Promise.all(
+                uniqueRelevanceOrders.map((relevanceOrder) => {
+                    const arRelated = ar.relatedPosts.find(r => r.relevanceOrder === relevanceOrder);
+                    const enRelated = en.relatedPosts.find(r => r.relevanceOrder === relevanceOrder);
+
+                    return client.query(WRITE_QUERIES.insertRelatedPosts, [
+                        post_id, 
+                        arRelated?.relatedPostTitle || null, // title_ar
+                        enRelated?.relatedPostTitle || null, // title_en
+                        arRelated?.relatedPostSlug || enRelated?.relatedPostSlug, 
+                        relevanceOrder
+                    ]);
+                })
+            );
+        }
+
+        await client.sql`COMMIT`;
+        return { id: post_id, message: "Post created successfully" };
+    } catch (error) {
+        await client.sql`ROLLBACK`;
+        throw new Error(`Failed to create post: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+        client.release();
+    }
+}
     async findById(id: number): Promise<PostResponse | null> {
         try {
             const result = await sql.query<PostResponse>(READ_QUERIES.findById, [id]);
@@ -149,7 +258,6 @@ export class BlogRepositoryImplementation implements IBlogRepository {
         }
     }
     
-
     async findBySlug(slug: string): Promise<PostResponse[] | null> {
         try {
             const result = await sql.query<PostResponse>(READ_QUERIES.findBySlug, [slug]);
@@ -162,7 +270,6 @@ export class BlogRepositoryImplementation implements IBlogRepository {
             );
         }
     }
-
     
     async findAll(
         params: PaginationParams,
@@ -201,22 +308,215 @@ export class BlogRepositoryImplementation implements IBlogRepository {
             }`
           );
         }
-      }
-      
-            
-      
-
-    // async getPosts(params: PostQueryParams): Promise<PaginatedResponse<PostListResponse>> {
-    //     try {
-    //         return (await sql.query(READ_QUIRES_POSTS.getPost , [params.limit , params.page])).rows as PostListResponse
-    //     } catch (error) {
-            
-    //     }
-    // }
-
-    // deletePost(id: number): Promise<void> {
+    }
+    
+    async updateTags(id: number, payload: TagUpdatePayload[]): Promise<boolean> {
+        const client = await db.connect();
+        try {
+            await client.sql`BEGIN`;
+            Promise.all(
+                payload.map(async(ele)=>{
+                    await client.query(UPDATE_QUERIES.updatePostTag, [id, ele.id, ele.name, ele.slug]);
+                })
+            )
+            await client.sql`COMMIT`;
+            return true;
+        } catch (error) {
+            await client.sql`ROLLBACK`;
+            throw new Error(
+                `Failed to update tags for post (${id}): ${
+                    error instanceof Error ? error.message : "Unknown error"
+                }`
+            );
+        } finally {
+            client.release();
+        }
+    }
+    
+// Update content sections
+async updateContentSections(postId: number, payload: ContentSectionUpdatePayload[]): Promise<boolean> {
+    const client = await db.connect();
+    try {
+        await client.query('BEGIN');
         
-    // }
+        await Promise.all(
+            payload.map(async (section) => {
+                // Parameters: postId, sectionId, sectionOrder, heading, body, sectionType
+                await client.query(UPDATE_QUERIES.updateContentSection, [
+                    postId, 
+                    section.id,
+                    section.sectionOrder, 
+                    section.heading, 
+                    section.body, 
+                    section.sectionType
+                ]);
+            })
+        );
+        
+        await client.query('COMMIT');
+        return true;
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw new Error(
+            `Failed to update content sections for post (${postId}): ${
+                error instanceof Error ? error.message : "Unknown error"
+            }`
+        );
+    } finally {
+        client.release();
+    }
+}
+
+// Update categories
+async updateCategories(postId: number, payload: CategoryUpdatePayload[]): Promise<boolean> {
+    const client = await db.connect();
+    try {
+        await client.query('BEGIN');
+        
+        await Promise.all(
+            payload.map(async (category) => {
+                // Parameters: postId, categoryId, name, slug, description
+                await client.query(UPDATE_QUERIES.updateCategory, [postId, category.id, category.name, category.slug, category.description]);
+            })
+        );
+        
+        await client.query('COMMIT');
+        return true;
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw new Error(
+            `Failed to update categories for post (${postId}): ${
+                error instanceof Error ? error.message : "Unknown error"
+            }`
+        );
+    } finally {
+        client.release();
+    }
+}
+
+// Update table of contents
+async updateTableOfContents(postId: number, payload: TableOfContentUpdatePayload[]): Promise<boolean> {
+    const client = await db.connect();
+    try {
+        await client.query('BEGIN');
+        
+        await Promise.all(
+            payload.map(async (toc) => {
+                // Parameters: postId, tocId, heading, tocOrder
+                await client.query(UPDATE_QUERIES.updateTableOfContents, [postId, toc.id, toc.heading, toc.tocOrder]);
+            })
+        );
+        
+        await client.query('COMMIT');
+        return true;
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw new Error(
+            `Failed to update table of contents for post (${postId}): ${
+                error instanceof Error ? error.message : "Unknown error"
+            }`
+        );
+    } finally {
+        client.release();
+    }
+}
+
+// Update FAQ items
+async updateFaqItems(contentSectionId: number, payload: FaqItemUpdatePayload[]): Promise<boolean> {
+    const client = await db.connect();
+    try {
+        await client.query('BEGIN');
+        
+        await Promise.all(
+            payload.map(async (faq) => {
+                // Parameters: contentSectionId, faqId, question, answer, faqOrder
+                await client.query(UPDATE_QUERIES.updateFaqItem, [contentSectionId, faq.id, faq.question, faq.answer, faq.faqOrder]);
+            })
+        );
+        
+        await client.query('COMMIT');
+        return true;
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw new Error(
+            `Failed to update FAQ items for content section (${contentSectionId}): ${
+                error instanceof Error ? error.message : "Unknown error"
+            }`
+        );
+    } finally {
+        client.release();
+    }
+}
+
+// Update related posts
+async updateRelatedPosts(postId: number, payload: RelatedPostUpdatePayload[]): Promise<boolean> {
+    const client = await db.connect();
+    try {
+        await client.query('BEGIN');
+        
+        await Promise.all(
+            payload.map(async (relatedPost) => {
+                // Parameters: postId, relatedPostId, title, slug, relevanceOrder
+                await client.query(UPDATE_QUERIES.updateRelatedPost, [
+                    postId,
+                    relatedPost.id,
+                    relatedPost.relatedPostTitle, 
+                    relatedPost.relatedPostSlug, 
+                    relatedPost.relevanceOrder
+                ]);
+            })
+        );
+        
+        await client.query('COMMIT');
+        return true;
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw new Error(
+            `Failed to update related posts for post (${postId}): ${
+                error instanceof Error ? error.message : "Unknown error"
+            }`
+        );
+    } finally {
+        client.release();
+    }
+}
+
+    async deletePost(id: number): Promise<void> {
+        try {
+            const result = await sql.query(DELETE_QUIRES.deleteById,[id])
+
+            // Check if any rows were affected
+            if (result.rowCount === 0) {
+                throw new Error(`No post found with ID ${id} to delete`);
+            }
+        } catch (error) {
+            throw new Error(
+                `Failed to delete post (${id}) : ${
+                  error instanceof Error ? error.message : "Unknown error"
+                }`
+              );
+        }
+    }
+
+    async findBlogIDandAdminID(blogId: number, adminId: number): Promise<{success : boolean}> {
+        try {
+            const result = await sql.query(READ_QUERIES.findPostForAdmin,[blogId,adminId])
+
+            // Check if any rows were affected
+            if (result.rowCount === 0) {
+                return {success : false}
+            }
+
+            return {success : true}
+
+        } catch (error) {
+            throw new Error(
+                `Failed to verify admin post validation (${blogId}) : ${
+                  error instanceof Error ? error.message : "Unknown error"
+                }`
+              );
+        }
+    }
 
     // publishPost(id: number, publishedAt?: Date): Promise<Post> {
         

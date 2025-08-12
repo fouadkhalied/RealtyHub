@@ -11,6 +11,7 @@ import { ResponseBuilder } from '../../../../libs/common/apiResponse/apiResponse
 import { ErrorCode } from '../../../../libs/common/errors/enums/basic.error.enum';
 import { ErrorBuilder } from '../../../../libs/common/errors/errorBuilder';
 import { SearchRequest } from '../../application/dto/requests/SearchPostRequest.dto';
+import { UpdatePartType } from '../../application/interfaces/blog.interface';
 
 
 export class PostController {
@@ -236,5 +237,70 @@ export class PostController {
   //     next(error);
   //   }
   // }
+
+  async updatePart(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const blogId = parseInt(req.params.id, 10);
+      const part = req.params.part as UpdatePartType;
+      const adminId = req.user?.id;
+      const language = req.params.language
+
+      if (isNaN(blogId) || !part || !['en', 'ar'].includes(part)) {
+        res
+          .status(400)
+          .json(
+            ErrorBuilder.build(
+              ErrorCode.VALIDATION_ERROR,
+              "Invalid language"
+            )
+          );
+        return;
+      }
+
+      if (!adminId) {
+        res
+          .status(401)
+          .json(
+            ErrorBuilder.build(
+              ErrorCode.UNAUTHORIZED,
+              "Admin access required"
+            )
+          );
+        return;
+      }
+
+      if (isNaN(blogId) || !part || !['tag', 'content_section', 'category', 'table_of_contents', 'related_post'].includes(part)) {
+        res
+          .status(400)
+          .json(
+            ErrorBuilder.build(
+              ErrorCode.VALIDATION_ERROR,
+              "Invalid id or part"
+            )
+          );
+        return;
+      }
+
+      const verification = await this.postService.validatePostIdToAdminId(blogId,adminId)
+
+      if (!verification.success) {
+        const statusCode = verification.success ? 200 : verification.error?.details?.httpStatus || 500;
+         res.status(statusCode).json(verification);
+      }
+
+      const serviceResponse = await this.postService.updatePart(blogId, part, req.body as any, language);
+      const statusCode = serviceResponse.success ? 200 : serviceResponse.error?.details?.httpStatus || 500;
+      res.status(statusCode).json(serviceResponse);
+    } catch (error: any) {
+      res
+        .status(500)
+        .json(
+          ErrorBuilder.build(
+            ErrorCode.INTERNAL_SERVER_ERROR,
+            error.message || "Unexpected error occurred"
+          )
+        );
+    }
+  }
 }
 

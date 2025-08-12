@@ -141,4 +141,10 @@ app.get(
   (req,res)=> postController.getPosts(req,res)
 )
 
+app.patch(
+  '/api/posts/:id/:part/:language',
+  AuthMiddleware(UserRole.ADMIN),
+  (req, res) => postController.updatePart(req as any, res)
+)
+
 export default app;

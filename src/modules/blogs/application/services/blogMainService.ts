@@ -2,16 +2,16 @@ import { CreatePostRequest } from "../dto/requests/CreatePostRequest.dto";
 import { IBlogRepository } from "../../domain/repositories/IBlogRepository";
 import { validatePostCreation } from "../validators/blog.validate";
 import {
-  PaginatedResponse,
   PaginationParams
 } from "../../../../libs/common/pagination.vo";
 import { SearchRequest } from "../dto/requests/SearchPostRequest.dto";
 import { PostResponse } from "../dto/responses/PostResponse.dto";
 import { ApiResponseInterface } from "../../../../libs/common/apiResponse/interfaces/apiResponse.interface";
 import { ErrorCode } from "../../../../libs/common/errors/enums/basic.error.enum";
-import { PostListResponse } from "../dto/responses/PostListResponse.dto";
 import { ErrorBuilder } from "../../../../libs/common/errors/errorBuilder";
 import { ResponseBuilder } from "../../../../libs/common/apiResponse/apiResponseBuilder";
+import { UpdatePartType} from "../interfaces/blog.interface";
+import { UpdateStrategyFactory } from "./updateStrategies/UpdateStrategyFactory";
 
 export class PostMainService {
   constructor(private readonly blogRepo: IBlogRepository) {}
@@ -103,10 +103,59 @@ export class PostMainService {
       );
     }
   }
-  
-  
+
+  async validatePostIdToAdminId(
+    blogId: number, 
+    adminId: number
+  ): Promise<ApiResponseInterface<boolean>> {  
+    try {
+      const {success} = await this.blogRepo.findBlogIDandAdminID(blogId,adminId);
+      if (!success) {
+        return  ErrorBuilder.build(
+          ErrorCode.UNAUTHORIZED_ACCESS,
+          `Access denied you don't own this postId (${blogId})`
+        );
+      }
+      return ResponseBuilder.success(true , "admin verified")
+    } catch (error: any) {
+      return ErrorBuilder.build(
+        ErrorCode.INTERNAL_SERVER_ERROR,
+        error.message || "Failed to fetch posts"
+      );
+    }
+  }
 
   async validate(props: CreatePostRequest) {
     return validatePostCreation.validate(props);
+  }
+
+  async updatePart(
+    id: number,
+    part: UpdatePartType,
+    payload: object,
+    language: string
+  ) {
+    try {
+      const strategy = UpdateStrategyFactory.create(part, this.blogRepo);
+      const ok = await strategy.execute(id, payload as any);
+      if (!ok) {
+        return ErrorBuilder.build(
+          ErrorCode.INTERNAL_SERVER_ERROR,
+          "Update did not modify any records"
+        );
+      }
+      return ResponseBuilder.success(payload, `Post ${part} updated successfully`);
+    } catch (error: any) {
+      if (error?.name === 'ValidationError') {
+        return ErrorBuilder.build(
+          ErrorCode.VALIDATION_ERROR,
+          error.message
+        );
+      }
+      return ErrorBuilder.build(
+        ErrorCode.INTERNAL_SERVER_ERROR,
+        error.message || "Unexpected error"
+      );
+    }
   }
 }

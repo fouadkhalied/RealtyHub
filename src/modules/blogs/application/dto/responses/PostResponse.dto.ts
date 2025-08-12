@@ -10,10 +10,20 @@ import { RelatedPost } from "../../../domain/entities/relatedPost.entity";
 
 export interface PostResponse extends Post {
     author: Pick<User, 'id' | 'username'>;
-    content_sections: ContentSection[];
+    ar : {
+      content_sections: ContentSection[];
     categories: Category[];
     tags: Tag[];
     table_of_contents: TableOfContent[];
     faq_items: FaqItem[];
     related_posts: RelatedPost[];
+    } , 
+    en : {
+      content_sections: ContentSection[];
+    categories: Category[];
+    tags: Tag[];
+    table_of_contents: TableOfContent[];
+    faq_items: FaqItem[];
+    related_posts: RelatedPost[];
+    }
   }

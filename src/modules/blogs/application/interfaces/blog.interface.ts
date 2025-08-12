@@ -6,7 +6,7 @@ export interface CreateContentSectionRequest {
     sectionType: 'text' | 'code' | 'image' | 'video' | 'quote';
   }
   
-  export interface UpdateContentSectionRequest {
+  export interface ContentSectionUpdatePayload {
     id?: number;
     sectionOrder?: number;
     heading?: string;
@@ -20,7 +20,8 @@ export interface CreateContentSectionRequest {
     description?: string;
   }
   
-  export interface UpdateCategoryRequest {
+  export interface CategoryUpdatePayload {
+    id?: number;
     name?: string;
     slug?: string;
     description?: string;
@@ -31,7 +32,8 @@ export interface CreateContentSectionRequest {
     slug?: string;
   }
   
-  export interface UpdateTagRequest {
+  export interface TagUpdatePayload {
+    id?: number;
     name?: string;
     slug?: string;
   }
@@ -41,7 +43,7 @@ export interface CreateContentSectionRequest {
     tocOrder: number;
   }
   
-  export interface UpdateTableOfContentRequest {
+  export interface TableOfContentUpdatePayload {
     id?: number;
     heading?: string;
     tocOrder?: number;
@@ -53,7 +55,7 @@ export interface CreateContentSectionRequest {
     faqOrder: number;
   }
   
-  export interface UpdateFaqItemRequest {
+  export interface FaqItemUpdatePayload {
     id?: number;
     question?: string;
     answer?: string;
@@ -65,7 +67,7 @@ export interface CreateContentSectionRequest {
     url: string;
   }
   
-  export interface UpdateReferenceRequest {
+  export interface ReferenceUpdatePayload {
     id?: number;
     title?: string;
     url?: string;
@@ -77,9 +79,12 @@ export interface CreateContentSectionRequest {
     relevanceOrder: number;
   }
   
-  export interface UpdateRelatedPostRequest {
+  export interface RelatedPostUpdatePayload {
     id?: number;
     relatedPostTitle?: string;
     relatedPostSlug?: string;
     relevanceOrder?: number;
   }
+
+// Update-part discriminators
+export type UpdatePartType = 'tag' | 'content_section' | 'category' | 'table_of_contents' | 'related_post';

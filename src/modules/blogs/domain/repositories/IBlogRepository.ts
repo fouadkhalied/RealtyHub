@@ -3,25 +3,32 @@ import { CreatePostRequest } from "../../application/dto/requests/CreatePostRequ
 import { SearchRequest } from "../../application/dto/requests/SearchPostRequest.dto";
 import { PostListResponse } from "../../application/dto/responses/PostListResponse.dto";
 import { PostResponse } from "../../application/dto/responses/PostResponse.dto";
-import { Post } from "../entities/post.entity";
+import { CategoryUpdatePayload, ContentSectionUpdatePayload, RelatedPostUpdatePayload, TableOfContentUpdatePayload, TagUpdatePayload } from "../../application/interfaces/blog.interface";
 
 export interface IBlogRepository {
   create(postData: CreatePostRequest , adminId : number): Promise<{id : number , message : string}>;
   
-  // // Get post by ID with all related data
+  // Get post by ID with all related data
   findById(id: number): Promise<PostResponse | null>;
   
-  // // Get post by slug with all related data
+  // Get post by slug with all related data
   findBySlug(slug: string): Promise<PostResponse[] | null>;
   
-  // // Get paginated list of posts
+  // Get paginated list of posts
   findAll(params: PaginationParams, filters: SearchRequest): Promise<PaginatedResponse<PostListResponse>>;
   
-  // // Update post with related data
-  // //updatePost(id: number, postData: UpdatePostRequest): Promise<PostResponse>;
+  // Update specific parts
+  updateTags(id: number, payload: TagUpdatePayload[]): Promise<boolean>;
+  updateContentSections(id: number, payload: ContentSectionUpdatePayload[]): Promise<boolean>;
+  updateCategories(id: number, payload: CategoryUpdatePayload[]): Promise<boolean>;
+  updateTableOfContents(id: number, payload: TableOfContentUpdatePayload[]): Promise<boolean>;
+  updateRelatedPosts(id: number, payload: RelatedPostUpdatePayload[]): Promise<boolean>;
   
-  // // Delete post and all related data
-  // deletePost(id: number): Promise<void>;
+  // Delete post and all related data
+  deletePost(id: number): Promise<void>;
+
+  // Validate that admin owns the post 
+  findBlogIDandAdminID(propertyId: number, adminId: number): Promise<{success : boolean}>
   
   // // Publish/unpublish post
   // publishPost(id: number, publishedAt?: Date): Promise<Post>;

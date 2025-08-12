@@ -2,16 +2,27 @@ import { CreateCategoryRequest, CreateContentSectionRequest, CreateFaqItemReques
 
 export interface CreatePostRequest {
     slug: string;
-    title: string;
-    summary?: string;
+    title_ar: string;
+    title_en: string;
+    summary_ar?: string;
+    summary_en?: string;
     featuredImageUrl?: string;
     status?: 'draft' | 'published';
     published_at?: string;
-    contentSections: CreateContentSectionRequest[];
-    categories: CreateCategoryRequest[];
-    tags: CreateTagRequest[];
-    tableOfContents: CreateTableOfContentRequest[];
-    faqItems: CreateFaqItemRequest[];
-    relatedPosts: CreateRelatedPostRequest[];
+    ar: {
+        contentSections: CreateContentSectionRequest[];
+        categories: CreateCategoryRequest[];
+        tags: CreateTagRequest[];
+        tableOfContents: CreateTableOfContentRequest[];
+        faqItems: CreateFaqItemRequest[];
+        relatedPosts: CreateRelatedPostRequest[];
+    };
+    en: {
+        contentSections: CreateContentSectionRequest[];
+        categories: CreateCategoryRequest[];
+        tags: CreateTagRequest[];
+        tableOfContents: CreateTableOfContentRequest[];
+        faqItems: CreateFaqItemRequest[];
+        relatedPosts: CreateRelatedPostRequest[];
+    };
 }
-
