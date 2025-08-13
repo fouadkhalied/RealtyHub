@@ -2,6 +2,61 @@ import Joi from "joi";
 import { PostStatus } from "../../domain/enum/postStatus.enum";
 import { SectionType } from "../../domain/enum/sectionType.enum";
 
+// Helper function to check if text contains Arabic characters
+const containsArabic = (text: string): boolean => {
+  const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+  return arabicRegex.test(text);
+};
+
+// Helper function to check if text contains English characters (Latin script)
+const containsEnglish = (text: string): boolean => {
+  const englishRegex = /[A-Za-z]/;
+  return englishRegex.test(text);
+};
+
+// Custom Joi validation for Arabic text
+const arabicText = Joi.string().custom((value: string, helpers: Joi.CustomHelpers) => {
+  if (!containsArabic(value)) {
+    return helpers.message('Text must contain Arabic characters' as any);
+  }
+  return value;
+});
+
+// Custom Joi validation for English text
+const englishText = Joi.string().custom((value: string, helpers: Joi.CustomHelpers) => {
+  if (!containsEnglish(value)) {
+    return helpers.message('Text must contain English characters' as any);
+  }
+  return value;
+});
+
+// Alternative: More flexible validation that allows mixed content but requires primary language
+const arabicPrimaryText = Joi.string().custom((value: string, helpers: Joi.CustomHelpers) => {
+  const arabicCharCount = (value.match(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g) || []).length;
+  const totalCharCount = value.replace(/\s/g, '').length; // excluding spaces
+  
+  if (totalCharCount === 0) return value; // Allow empty strings if optional
+  
+  // At least 30% of non-space characters should be Arabic
+  if (arabicCharCount / totalCharCount < 0.3) {
+    return helpers.message('Text must be primarily in Arabic (at least 30% Arabic characters)' as any);
+  }
+  return value;
+});
+
+const englishPrimaryText = Joi.string().custom((value: string, helpers: Joi.CustomHelpers) => {
+  const englishCharCount = (value.match(/[A-Za-z]/g) || []).length;
+  const totalCharCount = value.replace(/\s/g, '').length; // excluding spaces
+  
+  if (totalCharCount === 0) return value; // Allow empty strings if optional
+  
+  // At least 30% of non-space characters should be English
+  if (englishCharCount / totalCharCount < 0.3) {
+    return helpers.message('Text must be primarily in English (at least 30% English characters)' as any);
+  }
+  return value;
+});
+
 export const validatePostCreation = Joi.object({
   slug: Joi.string()
     .regex(/^[a-z0-9-]+$/)
@@ -12,11 +67,14 @@ export const validatePostCreation = Joi.object({
       'string.pattern.base': 'Slug must contain only lowercase letters, numbers, and hyphens',
     }),
 
-  titleAr: Joi.string().min(1).max(500).required(),
-  titleEn: Joi.string().min(1).max(500).required(),
+  // Use Arabic validation for Arabic titles
+  titleAr: arabicText.min(1).max(500).required(),
+  // Use English validation for English titles  
+  titleEn: englishText.min(1).max(500).required(),
 
-  summaryAr: Joi.string().max(1000).optional(),
-  summaryEn: Joi.string().max(1000).optional(),
+  // Optional summaries with language validation
+  summaryAr: arabicPrimaryText.max(1000).optional().allow(''),
+  summaryEn: englishPrimaryText.max(1000).optional().allow(''),
 
   featuredImageUrl: Joi.string().uri().optional(),
 
@@ -28,15 +86,15 @@ export const validatePostCreation = Joi.object({
     contentSections: Joi.array().items(
       Joi.object({
         sectionOrder: Joi.number().integer().min(1).required(),
-        heading: Joi.string().max(500).optional(),
-        body: Joi.string().min(1).required(),
+        heading: arabicPrimaryText.max(500).optional().allow(''),
+        body: arabicPrimaryText.min(1).required(),
         sectionType: Joi.string().valid(...Object.values(SectionType)).required()
       })
     ).min(1).required(),
 
     categories: Joi.array().items(
       Joi.object({
-        name: Joi.string().min(1).max(255).required(),
+        name: arabicText.min(1).max(255).required(),
         slug: Joi.string()
           .regex(/^[a-z0-9-]+$/)
           .min(1)
@@ -45,13 +103,13 @@ export const validatePostCreation = Joi.object({
           .messages({
             'string.pattern.base': 'Category slug must contain only lowercase letters, numbers, and hyphens',
           }),
-        description: Joi.string().max(1000).optional()
+        description: arabicPrimaryText.max(1000).optional().allow('')
       })
     ).min(1).required(),
 
     tags: Joi.array().items(
       Joi.object({
-        name: Joi.string().min(1).max(255).required(),
+        name: arabicText.min(1).max(255).required(),
         slug: Joi.string()
           .regex(/^[a-z0-9-]+$/)
           .min(1)
@@ -65,22 +123,22 @@ export const validatePostCreation = Joi.object({
 
     tableOfContents: Joi.array().items(
       Joi.object({
-        heading: Joi.string().min(1).max(500).optional(),
+        heading: arabicPrimaryText.min(1).max(500).optional(),
         tocOrder: Joi.number().integer().min(1).optional()
       })
     ).optional(),
 
     faqItems: Joi.array().items(
       Joi.object({
-        question: Joi.string().min(1).max(1000).optional(),
-        answer: Joi.string().min(1).optional(),
+        question: arabicPrimaryText.min(1).max(1000).optional(),
+        answer: arabicPrimaryText.min(1).optional(),
         faqOrder: Joi.number().integer().min(1).optional()
       })
     ).optional(),
 
     relatedPosts: Joi.array().items(
       Joi.object({
-        relatedPostTitle: Joi.string().min(1).max(500).optional(),
+        relatedPostTitle: arabicPrimaryText.min(1).max(500).optional(),
         relatedPostSlug: Joi.string().regex(/^[a-z0-9-]+$/).optional()
           .messages({
             'string.pattern.base': 'Related post slug must contain only lowercase letters, numbers, and hyphens',
@@ -94,15 +152,15 @@ export const validatePostCreation = Joi.object({
     contentSections: Joi.array().items(
       Joi.object({
         sectionOrder: Joi.number().integer().min(1).required(),
-        heading: Joi.string().max(500).optional(),
-        body: Joi.string().min(1).required(),
+        heading: englishPrimaryText.max(500).optional().allow(''),
+        body: englishPrimaryText.min(1).required(),
         sectionType: Joi.string().valid(...Object.values(SectionType)).required()
       })
     ).min(1).required(),
 
     categories: Joi.array().items(
       Joi.object({
-        name: Joi.string().min(1).max(255).required(),
+        name: englishText.min(1).max(255).required(),
         slug: Joi.string()
           .regex(/^[a-z0-9-]+$/)
           .min(1)
@@ -111,13 +169,13 @@ export const validatePostCreation = Joi.object({
           .messages({
             'string.pattern.base': 'Category slug must contain only lowercase letters, numbers, and hyphens',
           }),
-        description: Joi.string().max(1000).optional()
+        description: englishPrimaryText.max(1000).optional().allow('')
       })
     ).min(1).required(),
 
     tags: Joi.array().items(
       Joi.object({
-        name: Joi.string().min(1).max(255).required(),
+        name: englishText.min(1).max(255).required(),
         slug: Joi.string()
           .regex(/^[a-z0-9-]+$/)
           .min(1)
@@ -131,22 +189,22 @@ export const validatePostCreation = Joi.object({
 
     tableOfContents: Joi.array().items(
       Joi.object({
-        heading: Joi.string().min(1).max(500).optional(),
+        heading: englishPrimaryText.min(1).max(500).optional(),
         tocOrder: Joi.number().integer().min(1).optional()
       })
     ).optional(),
 
     faqItems: Joi.array().items(
       Joi.object({
-        question: Joi.string().min(1).max(1000).optional(),
-        answer: Joi.string().min(1).optional(),
+        question: englishPrimaryText.min(1).max(1000).optional(),
+        answer: englishPrimaryText.min(1).optional(),
         faqOrder: Joi.number().integer().min(1).optional()
       })
     ).optional(),
 
     relatedPosts: Joi.array().items(
       Joi.object({
-        relatedPostTitle: Joi.string().min(1).max(500).optional(),
+        relatedPostTitle: englishPrimaryText.min(1).max(500).optional(),
         relatedPostSlug: Joi.string().regex(/^[a-z0-9-]+$/).optional()
           .messages({
             'string.pattern.base': 'Related post slug must contain only lowercase letters, numbers, and hyphens',
@@ -157,10 +215,11 @@ export const validatePostCreation = Joi.object({
   }).required()
 });
 
-export const validateUpdateTagPayload = Joi.array().items(
+// Arabic validation schemas
+export const validateUpdateTagPayloadAr = Joi.array().items(
   Joi.object({
     id: Joi.number().integer().required(),
-    name: Joi.string().min(1).max(255).required(),
+    name: arabicText.min(1).max(255).required(),
     slug: Joi.string()
       .regex(/^[a-z0-9-]+$/)
       .min(1)
@@ -172,22 +231,20 @@ export const validateUpdateTagPayload = Joi.array().items(
   })
 );
 
-// Updated validation for content sections - now array format
-export const validateUpdateContentSectionPayload = Joi.array().items(
+export const validateUpdateContentSectionPayloadAr = Joi.array().items(
   Joi.object({
     id: Joi.number().integer().required(),
     sectionOrder: Joi.number().integer().min(1).required(),
-    heading: Joi.string().max(500).required(),
-    body: Joi.string().min(1).required(),
+    heading: arabicPrimaryText.max(500).required(),
+    body: arabicPrimaryText.min(1).required(),
     sectionType: Joi.string().valid(...Object.values(SectionType)).required()
   })
 );
 
-// Updated validation for categories - now array format with required id
-export const validateUpdateCategoryPayload = Joi.array().items(
+export const validateUpdateCategoryPayloadAr = Joi.array().items(
   Joi.object({
     id: Joi.number().integer().required(),
-    name: Joi.string().min(1).max(255).required(),
+    name: arabicText.min(1).max(255).required(),
     slug: Joi.string()
       .regex(/^[a-z0-9-]+$/)
       .min(1)
@@ -196,34 +253,31 @@ export const validateUpdateCategoryPayload = Joi.array().items(
       .messages({
         'string.pattern.base': 'Category slug must contain only lowercase letters, numbers, and hyphens',
       }),
-    description: Joi.string().max(1000).required()
+    description: arabicPrimaryText.max(1000).required()
   })
 );
 
-// Updated validation for table of contents - now array format with required fields
-export const validateUpdateTableOfContentPayload = Joi.array().items(
+export const validateUpdateTableOfContentPayloadAr = Joi.array().items(
   Joi.object({
     id: Joi.number().integer().required(),
-    heading: Joi.string().min(1).max(500).required(),
+    heading: arabicPrimaryText.min(1).max(500).required(),
     tocOrder: Joi.number().integer().min(1).required()
   })
 );
 
-// Updated validation for FAQ items - new array format
-export const validateUpdateFaqItemPayload = Joi.array().items(
+export const validateUpdateFaqItemPayloadAr = Joi.array().items(
   Joi.object({
     id: Joi.number().integer().required(),
-    question: Joi.string().min(1).max(1000).required(),
-    answer: Joi.string().min(1).required(),
+    question: arabicPrimaryText.min(1).max(1000).required(),
+    answer: arabicPrimaryText.min(1).required(),
     faqOrder: Joi.number().integer().min(1).required()
   })
 );
 
-// Updated validation for related posts - now array format with required fields
-export const validateUpdateRelatedPostPayload = Joi.array().items(
+export const validateUpdateRelatedPostPayloadAr = Joi.array().items(
   Joi.object({
     id: Joi.number().integer().required(),
-    relatedPostTitle: Joi.string().min(1).max(500).required(),
+    relatedPostTitle: arabicPrimaryText.min(1).max(500).required(),
     relatedPostSlug: Joi.string()
       .regex(/^[a-z0-9-]+$/)
       .min(1)
@@ -235,3 +289,88 @@ export const validateUpdateRelatedPostPayload = Joi.array().items(
     relevanceOrder: Joi.number().integer().min(1).required()
   })
 );
+
+// English validation schemas
+export const validateUpdateTagPayloadEn = Joi.array().items(
+  Joi.object({
+    id: Joi.number().integer().required(),
+    name: englishText.min(1).max(255).required(),
+    slug: Joi.string()
+      .regex(/^[a-z0-9-]+$/)
+      .min(1)
+      .max(255)
+      .required()
+      .messages({
+        'string.pattern.base': 'Tag slug must contain only lowercase letters, numbers, and hyphens',
+      })
+  })
+);
+
+export const validateUpdateContentSectionPayloadEn = Joi.array().items(
+  Joi.object({
+    id: Joi.number().integer().required(),
+    sectionOrder: Joi.number().integer().min(1).required(),
+    heading: englishPrimaryText.max(500).required(),
+    body: englishPrimaryText.min(1).required(),
+    sectionType: Joi.string().valid(...Object.values(SectionType)).required()
+  })
+);
+
+export const validateUpdateCategoryPayloadEn = Joi.array().items(
+  Joi.object({
+    id: Joi.number().integer().required(),
+    name: englishText.min(1).max(255).required(),
+    slug: Joi.string()
+      .regex(/^[a-z0-9-]+$/)
+      .min(1)
+      .max(255)
+      .required()
+      .messages({
+        'string.pattern.base': 'Category slug must contain only lowercase letters, numbers, and hyphens',
+      }),
+    description: englishPrimaryText.max(1000).required()
+  })
+);
+
+export const validateUpdateTableOfContentPayloadEn = Joi.array().items(
+  Joi.object({
+    id: Joi.number().integer().required(),
+    heading: englishPrimaryText.min(1).max(500).required(),
+    tocOrder: Joi.number().integer().min(1).required()
+  })
+);
+
+export const validateUpdateFaqItemPayloadEn = Joi.array().items(
+  Joi.object({
+    id: Joi.number().integer().required(),
+    question: englishPrimaryText.min(1).max(1000).required(),
+    answer: englishPrimaryText.min(1).required(),
+    faqOrder: Joi.number().integer().min(1).required()
+  })
+);
+
+export const validateUpdateRelatedPostPayloadEn = Joi.array().items(
+  Joi.object({
+    id: Joi.number().integer().required(),
+    relatedPostTitle: englishPrimaryText.min(1).max(500).required(),
+    relatedPostSlug: Joi.string()
+      .regex(/^[a-z0-9-]+$/)
+      .min(1)
+      .max(255)
+      .required()
+      .messages({
+        'string.pattern.base': 'Related post slug must contain only lowercase letters, numbers, and hyphens',
+      }),
+    relevanceOrder: Joi.number().integer().min(1).required()
+  })
+);
+
+// Export helper functions for use elsewhere
+export { 
+  containsArabic, 
+  containsEnglish, 
+  arabicText, 
+  englishText, 
+  arabicPrimaryText, 
+  englishPrimaryText 
+};

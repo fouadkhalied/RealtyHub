@@ -18,11 +18,11 @@ export interface IBlogRepository {
   findAll(params: PaginationParams, filters: SearchRequest): Promise<PaginatedResponse<PostListResponse>>;
   
   // Update specific parts
-  updateTags(id: number, payload: TagUpdatePayload[]): Promise<boolean>;
-  updateContentSections(id: number, payload: ContentSectionUpdatePayload[]): Promise<boolean>;
-  updateCategories(id: number, payload: CategoryUpdatePayload[]): Promise<boolean>;
-  updateTableOfContents(id: number, payload: TableOfContentUpdatePayload[]): Promise<boolean>;
-  updateRelatedPosts(id: number, payload: RelatedPostUpdatePayload[]): Promise<boolean>;
+  updateTags(id: number, payload: TagUpdatePayload[], language: string): Promise<boolean>;
+  updateContentSections(id: number, payload: ContentSectionUpdatePayload[], language: string): Promise<boolean>;
+  updateCategories(id: number, payload: CategoryUpdatePayload[], language: string): Promise<boolean>;
+  updateTableOfContents(id: number, payload: TableOfContentUpdatePayload[], language: string): Promise<boolean>;
+  updateRelatedPosts(id: number, payload: RelatedPostUpdatePayload[], language: string): Promise<boolean>;
   
   // Delete post and all related data
   deletePost(id: number): Promise<void>;

@@ -137,7 +137,7 @@ export class PostMainService {
   ) {
     try {
       const strategy = UpdateStrategyFactory.create(part, this.blogRepo);
-      const ok = await strategy.execute(id, payload as any);
+      const ok = await strategy.execute(id, payload as any,language);
       if (!ok) {
         return ErrorBuilder.build(
           ErrorCode.INTERNAL_SERVER_ERROR,

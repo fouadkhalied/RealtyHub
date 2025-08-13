@@ -11,7 +11,13 @@ export class UpdateStrategyFactory {
   static create(
     part: UpdatePartType,
     repo: IBlogRepository
-  ): UpdateStrategy<TagUpdatePayload[] | ContentSectionUpdatePayload | CategoryUpdatePayload | TableOfContentUpdatePayload | RelatedPostUpdatePayload> {
+  ): UpdateStrategy<
+    TagUpdatePayload[] |
+    ContentSectionUpdatePayload[] |
+    CategoryUpdatePayload[] |
+    TableOfContentUpdatePayload[] |
+    RelatedPostUpdatePayload[]
+  > {
     switch (part) {
       case 'tag':
         return new TagUpdateStrategy(repo);

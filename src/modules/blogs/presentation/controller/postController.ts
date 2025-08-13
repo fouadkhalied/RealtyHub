@@ -245,7 +245,7 @@ export class PostController {
       const adminId = req.user?.id;
       const language = req.params.language
 
-      if (isNaN(blogId) || !part || !['en', 'ar'].includes(part)) {
+      if (!['en', 'ar'].includes(language)) {
         res
           .status(400)
           .json(

@@ -310,15 +310,22 @@ async create(postData: CreatePostRequest, adminId: number): Promise<{ id: number
         }
     }
     
-    async updateTags(id: number, payload: TagUpdatePayload[]): Promise<boolean> {
+    async updateTags(id: number, payload: TagUpdatePayload[], language: string): Promise<boolean> {
         const client = await db.connect();
         try {
             await client.sql`BEGIN`;
-            Promise.all(
-                payload.map(async(ele)=>{
-                    await client.query(UPDATE_QUERIES.updatePostTag, [id, ele.id, ele.name, ele.slug]);
+            await Promise.all(
+                payload.map(async (ele) => {
+                    // Update based on language - tags table should have name_ar and name_en columns
+                    if (language === 'ar') {
+                        await client.query(UPDATE_QUERIES.updatePostTagAr, [id, ele.id, ele.name, ele.slug]);
+                    } else if (language === 'en') {
+                        await client.query(UPDATE_QUERIES.updatePostTagEn, [id, ele.id, ele.name, ele.slug]);
+                    } else {
+                        throw new Error(`Unsupported language: ${language}`);
+                    }
                 })
-            )
+            );
             await client.sql`COMMIT`;
             return true;
         } catch (error) {
@@ -333,153 +340,230 @@ async create(postData: CreatePostRequest, adminId: number): Promise<{ id: number
         }
     }
     
-// Update content sections
-async updateContentSections(postId: number, payload: ContentSectionUpdatePayload[]): Promise<boolean> {
-    const client = await db.connect();
-    try {
-        await client.query('BEGIN');
-        
-        await Promise.all(
-            payload.map(async (section) => {
-                // Parameters: postId, sectionId, sectionOrder, heading, body, sectionType
-                await client.query(UPDATE_QUERIES.updateContentSection, [
-                    postId, 
-                    section.id,
-                    section.sectionOrder, 
-                    section.heading, 
-                    section.body, 
-                    section.sectionType
-                ]);
-            })
-        );
-        
-        await client.query('COMMIT');
-        return true;
-    } catch (error) {
-        await client.query('ROLLBACK');
-        throw new Error(
-            `Failed to update content sections for post (${postId}): ${
-                error instanceof Error ? error.message : "Unknown error"
-            }`
-        );
-    } finally {
-        client.release();
+    // Update content sections
+    async updateContentSections(postId: number, payload: ContentSectionUpdatePayload[], language: string): Promise<boolean> {
+        const client = await db.connect();
+        try {
+            await client.query('BEGIN');
+            
+            await Promise.all(
+                payload.map(async (section) => {
+                    // Update based on language - content_sections table should have heading_ar/heading_en and body_ar/body_en
+                    if (language === 'ar') {
+                        await client.query(UPDATE_QUERIES.updateContentSectionAr, [
+                            postId, 
+                            section.id,
+                            section.sectionOrder, 
+                            section.heading, 
+                            section.body, 
+                            section.sectionType
+                        ]);
+                    } else if (language === 'en') {
+                        await client.query(UPDATE_QUERIES.updateContentSectionEn, [
+                            postId, 
+                            section.id,
+                            section.sectionOrder, 
+                            section.heading, 
+                            section.body, 
+                            section.sectionType
+                        ]);
+                    } else {
+                        throw new Error(`Unsupported language: ${language}`);
+                    }
+                })
+            );
+            
+            await client.query('COMMIT');
+            return true;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw new Error(
+                `Failed to update content sections for post (${postId}): ${
+                    error instanceof Error ? error.message : "Unknown error"
+                }`
+            );
+        } finally {
+            client.release();
+        }
     }
-}
-
-// Update categories
-async updateCategories(postId: number, payload: CategoryUpdatePayload[]): Promise<boolean> {
-    const client = await db.connect();
-    try {
-        await client.query('BEGIN');
-        
-        await Promise.all(
-            payload.map(async (category) => {
-                // Parameters: postId, categoryId, name, slug, description
-                await client.query(UPDATE_QUERIES.updateCategory, [postId, category.id, category.name, category.slug, category.description]);
-            })
-        );
-        
-        await client.query('COMMIT');
-        return true;
-    } catch (error) {
-        await client.query('ROLLBACK');
-        throw new Error(
-            `Failed to update categories for post (${postId}): ${
-                error instanceof Error ? error.message : "Unknown error"
-            }`
-        );
-    } finally {
-        client.release();
+    
+    // Update categories
+    async updateCategories(postId: number, payload: CategoryUpdatePayload[], language: string): Promise<boolean> {
+        const client = await db.connect();
+        try {
+            await client.query('BEGIN');
+            
+            await Promise.all(
+                payload.map(async (category) => {
+                    // Update based on language - categories table should have name_ar/name_en and description_ar/description_en
+                    if (language === 'ar') {
+                        await client.query(UPDATE_QUERIES.updateCategoryAr, [
+                            postId, 
+                            category.id, 
+                            category.name, 
+                            category.slug, 
+                            category.description
+                        ]);
+                    } else if (language === 'en') {
+                        await client.query(UPDATE_QUERIES.updateCategoryEn, [
+                            postId, 
+                            category.id, 
+                            category.name, 
+                            category.slug, 
+                            category.description
+                        ]);
+                    } else {
+                        throw new Error(`Unsupported language: ${language}`);
+                    }
+                })
+            );
+            
+            await client.query('COMMIT');
+            return true;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw new Error(
+                `Failed to update categories for post (${postId}): ${
+                    error instanceof Error ? error.message : "Unknown error"
+                }`
+            );
+        } finally {
+            client.release();
+        }
     }
-}
-
-// Update table of contents
-async updateTableOfContents(postId: number, payload: TableOfContentUpdatePayload[]): Promise<boolean> {
-    const client = await db.connect();
-    try {
-        await client.query('BEGIN');
-        
-        await Promise.all(
-            payload.map(async (toc) => {
-                // Parameters: postId, tocId, heading, tocOrder
-                await client.query(UPDATE_QUERIES.updateTableOfContents, [postId, toc.id, toc.heading, toc.tocOrder]);
-            })
-        );
-        
-        await client.query('COMMIT');
-        return true;
-    } catch (error) {
-        await client.query('ROLLBACK');
-        throw new Error(
-            `Failed to update table of contents for post (${postId}): ${
-                error instanceof Error ? error.message : "Unknown error"
-            }`
-        );
-    } finally {
-        client.release();
+    
+    // Update table of contents
+    async updateTableOfContents(postId: number, payload: TableOfContentUpdatePayload[], language: string): Promise<boolean> {
+        const client = await db.connect();
+        try {
+            await client.query('BEGIN');
+            
+            await Promise.all(
+                payload.map(async (toc) => {
+                    // Update based on language - table_of_contents should have heading_ar and heading_en
+                    if (language === 'ar') {
+                        await client.query(UPDATE_QUERIES.updateTableOfContentsAr, [
+                            postId, 
+                            toc.id, 
+                            toc.heading, 
+                            toc.tocOrder
+                        ]);
+                    } else if (language === 'en') {
+                        await client.query(UPDATE_QUERIES.updateTableOfContentsEn, [
+                            postId, 
+                            toc.id, 
+                            toc.heading, 
+                            toc.tocOrder
+                        ]);
+                    } else {
+                        throw new Error(`Unsupported language: ${language}`);
+                    }
+                })
+            );
+            
+            await client.query('COMMIT');
+            return true;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw new Error(
+                `Failed to update table of contents for post (${postId}): ${
+                    error instanceof Error ? error.message : "Unknown error"
+                }`
+            );
+        } finally {
+            client.release();
+        }
     }
-}
-
-// Update FAQ items
-async updateFaqItems(contentSectionId: number, payload: FaqItemUpdatePayload[]): Promise<boolean> {
-    const client = await db.connect();
-    try {
-        await client.query('BEGIN');
-        
-        await Promise.all(
-            payload.map(async (faq) => {
-                // Parameters: contentSectionId, faqId, question, answer, faqOrder
-                await client.query(UPDATE_QUERIES.updateFaqItem, [contentSectionId, faq.id, faq.question, faq.answer, faq.faqOrder]);
-            })
-        );
-        
-        await client.query('COMMIT');
-        return true;
-    } catch (error) {
-        await client.query('ROLLBACK');
-        throw new Error(
-            `Failed to update FAQ items for content section (${contentSectionId}): ${
-                error instanceof Error ? error.message : "Unknown error"
-            }`
-        );
-    } finally {
-        client.release();
+    
+    // Update FAQ items
+    async updateFaqItems(contentSectionId: number, payload: FaqItemUpdatePayload[], language: string): Promise<boolean> {
+        const client = await db.connect();
+        try {
+            await client.query('BEGIN');
+            
+            await Promise.all(
+                payload.map(async (faq) => {
+                    // Update based on language - faq_items should have question_ar/question_en and answer_ar/answer_en
+                    if (language === 'ar') {
+                        await client.query(UPDATE_QUERIES.updateFaqItemAr, [
+                            contentSectionId, 
+                            faq.id, 
+                            faq.question, 
+                            faq.answer, 
+                            faq.faqOrder
+                        ]);
+                    } else if (language === 'en') {
+                        await client.query(UPDATE_QUERIES.updateFaqItemEn, [
+                            contentSectionId, 
+                            faq.id, 
+                            faq.question, 
+                            faq.answer, 
+                            faq.faqOrder
+                        ]);
+                    } else {
+                        throw new Error(`Unsupported language: ${language}`);
+                    }
+                })
+            );
+            
+            await client.query('COMMIT');
+            return true;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw new Error(
+                `Failed to update FAQ items for content section (${contentSectionId}): ${
+                    error instanceof Error ? error.message : "Unknown error"
+                }`
+            );
+        } finally {
+            client.release();
+        }
     }
-}
-
-// Update related posts
-async updateRelatedPosts(postId: number, payload: RelatedPostUpdatePayload[]): Promise<boolean> {
-    const client = await db.connect();
-    try {
-        await client.query('BEGIN');
-        
-        await Promise.all(
-            payload.map(async (relatedPost) => {
-                // Parameters: postId, relatedPostId, title, slug, relevanceOrder
-                await client.query(UPDATE_QUERIES.updateRelatedPost, [
-                    postId,
-                    relatedPost.id,
-                    relatedPost.relatedPostTitle, 
-                    relatedPost.relatedPostSlug, 
-                    relatedPost.relevanceOrder
-                ]);
-            })
-        );
-        
-        await client.query('COMMIT');
-        return true;
-    } catch (error) {
-        await client.query('ROLLBACK');
-        throw new Error(
-            `Failed to update related posts for post (${postId}): ${
-                error instanceof Error ? error.message : "Unknown error"
-            }`
-        );
-    } finally {
-        client.release();
+    
+    // Update related posts
+    async updateRelatedPosts(postId: number, payload: RelatedPostUpdatePayload[], language: string): Promise<boolean> {
+        const client = await db.connect();
+        try {
+            await client.query('BEGIN');
+            
+            await Promise.all(
+                payload.map(async (relatedPost) => {
+                    // Update based on language - related_posts should have related_post_title_ar/related_post_title_en
+                    if (language === 'ar') {
+                        await client.query(UPDATE_QUERIES.updateRelatedPostAr, [
+                            postId,
+                            relatedPost.id,
+                            relatedPost.relatedPostTitle, 
+                            relatedPost.relatedPostSlug, 
+                            relatedPost.relevanceOrder
+                        ]);
+                    } else if (language === 'en') {
+                        await client.query(UPDATE_QUERIES.updateRelatedPostEn, [
+                            postId,
+                            relatedPost.id,
+                            relatedPost.relatedPostTitle, 
+                            relatedPost.relatedPostSlug, 
+                            relatedPost.relevanceOrder
+                        ]);
+                    } else {
+                        throw new Error(`Unsupported language: ${language}`);
+                    }
+                })
+            );
+            
+            await client.query('COMMIT');
+            return true;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw new Error(
+                `Failed to update related posts for post (${postId}): ${
+                    error instanceof Error ? error.message : "Unknown error"
+                }`
+            );
+        } finally {
+            client.release();
+        }
     }
-}
 
     async deletePost(id: number): Promise<void> {
         try {
