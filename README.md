@@ -153,12 +153,43 @@ curl -X POST \
 
 ### Blog Posts
 
+Note: Blog APIs support both Arabic (ar) and English (en) across titles, summaries, content sections, categories, tags, table of contents, FAQ items, and related posts.
+
 | Method | Endpoint | Security | Parameters | Description |
 |--------|----------|----------|------------|-------------|
 | `POST` | `/posts` | **Admin Only** | - | Create a new blog post |
 | `GET` | `/posts/:id` | Public | `id` (path) - Post ID | Retrieve a specific post by ID |
 | `GET` | `/posts/bySlug/:slug` | Public | `slug` (path) - Post slug | Search posts by slug (partial matching) |
 | `GET` | `/posts` | Public | `page` (query, optional) - Page number<br>`limit` (query, optional) - Items per page<br>`search` (query, optional) - Search term | Get paginated list of posts with optional search |
+| `PATCH` | `/posts/:id/:part/:language` | **Admin Only** | `id` (path) - Post ID<br>`part` (path) - Update target part<br>`language` (path) - `ar` or `en` | Update a specific part of a post (multi-language aware) |
+
+#### Update Post Part
+
+- `part` values:
+  - `tag`
+  - `content_section`
+  - `category`
+  - `table_of_contents`
+  - `related_post`
+
+- `language` values: `ar` or `en`
+
+Request body depends on `part` and should be an array of objects:
+
+```json
+// PATCH /api/posts/123/tag/en
+[
+  { "id": 1, "name": "javascript", "slug": "javascript" },
+  { "id": 2, "name": "nodejs", "slug": "nodejs" }
+]
+```
+
+```json
+// PATCH /api/posts/123/content_section/ar
+[
+  { "id": 10, "sectionOrder": 1, "heading": "مقدمة", "body": "نص عربي", "sectionType": "text" }
+]
+```
 
 **Blog Search Features:**
 - Search across post titles, slugs, summaries, categories, and tags
