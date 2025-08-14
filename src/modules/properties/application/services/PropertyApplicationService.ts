@@ -42,18 +42,24 @@ export class PropertyApplicationService {
         return ResponseBuilder.success(enhancedProperty, result.message);
     }
 
-    async getAllProperties(page: number = 1, limit: number = 10): Promise<ApiResponseInterface<PaginatedResponse<PropertyListItem>>> {
+    async getAllProperties(page: number = 1, limit: number = 10): Promise<ApiResponseInterface<PropertyListItem[]>> {
         const paginationParams = this.validatePaginationParams(page, limit);
         const result = await this.propertyDomainService.getAllProperties(paginationParams);
         
         if (!result.success) {
-            return ErrorBuilder.build(ErrorCode.DATABASE_ERROR, result.message)
+            ErrorBuilder.build(
+                ErrorCode.DATABASE_ERROR,
+                "Error in retriving properties",
+                {
+                    originalError : result.error?.code
+                }
+            )
         }
 
         const { properties, totalCount } = result.data!;
         const paginatedResponse = this.createPaginatedResponse(properties, totalCount, paginationParams);
         
-        return ResponseBuilder.success(paginatedResponse, result.message);
+        return ResponseBuilder.paginatedSuccess(paginatedResponse.data, paginatedResponse.pagination, "properties retrived successfully");
     }
 
     async updateProperty(id: number, data: Partial<CreatePropertyRequest>, userId?: number): Promise<ApiResponseInterface<void>> {
@@ -68,14 +74,15 @@ export class PropertyApplicationService {
     //     return await this.propertyLookupService.getPropertyTypes();
     // }
 
-    async getProjects(page: number = 1, limit: number = 10): Promise<ApiResponseInterface<PaginatedResponse<ProjectWithDeveloperAndLocation>>> {
+    async getProjects(page: number = 1, limit: number = 10): Promise<ApiResponseInterface<ProjectWithDeveloperAndLocation[]>> {
         const paginationParams = this.validatePaginationParams(page, limit);
         
         try {
             const { projects, totalCount } = await this.propertyLookupService.getProjects(paginationParams);
+            
             const paginatedResponse = this.createPaginatedResponse(projects, totalCount, paginationParams);
             
-            return ResponseBuilder.success(paginatedResponse, "Projects retrieved successfully");
+            return ResponseBuilder.paginatedSuccess(paginatedResponse.data,paginatedResponse.pagination, "Projects retrieved successfully");
         } catch (error: any) {
             return ErrorBuilder.build(
                 ErrorCode.DATABASE_ERROR,
