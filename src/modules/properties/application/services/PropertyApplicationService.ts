@@ -130,11 +130,11 @@ export class PropertyApplicationService {
             );
         }
     }
-
+    
     // ========== COMPLEX OPERATIONS (Use Cases) ==========
     
     async createProperty(props: CreatePropertyRequest, userId: number): Promise<ApiResponseInterface<number>> {
-        return await this.propertyDomainService.createProperty(props, userId);
+        return await this.createPropertyUseCase.execute(props, userId);
     }
 
     async approveProperty(propertyId: number): Promise<ApiResponseInterface<{PropertyId: number}>> {
@@ -158,11 +158,11 @@ export class PropertyApplicationService {
         }
     }
 
+    // ========== Helper methods ==========
+
     async getRequiredInterfaces(): Promise<ApiResponseInterface<any>> {
         return ResponseBuilder.success(requiredInterfacesData, "Required interfaces retrieved successfully");
     }
-
-    // ========== Helper methods ==========
     
     async authorizePropertyAccess(propertyId: number, userId: number): Promise<ApiResponseInterface<boolean>> {
         return await this.propertyDomainService.authorizePropertyAccess(propertyId, userId);

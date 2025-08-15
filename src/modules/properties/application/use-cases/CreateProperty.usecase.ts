@@ -15,6 +15,12 @@ export class CreatePropertyUseCase {
             
             return await this.propertyDomainService.createProperty(props,userId);
             
+
+            // Domain Event
+
+            // for future changes
+
+
             // Notifications
 
             // if (this.notificationService) {
