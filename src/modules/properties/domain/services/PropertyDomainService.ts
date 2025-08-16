@@ -8,6 +8,7 @@ import { ApiResponseInterface } from "../../../../libs/common/apiResponse/interf
 import { ErrorBuilder } from "../../../../libs/common/errors/errorBuilder";
 import { ErrorCode } from "../../../../libs/common/errors/enums/basic.error.enum";
 import { ValidationResult } from "../../../../libs/common/validation/validation.interface";
+import { ResponseBuilder } from "../../../../libs/common/apiResponse/apiResponseBuilder";
 
 export class PropertyDomainService {
     constructor(private readonly propertyRepository: IPropertyRepository) {}
@@ -15,12 +16,12 @@ export class PropertyDomainService {
     async createProperty(
         propertyData: CreatePropertyRequest, 
         userId: number
-    ): Promise<ApiResponseInterface<number>> {
+    ): Promise<ApiResponseInterface<{propertyId : number}>> {
         try {
             // Validate user ID
             const userValidation = this.validateUserId(userId);
             if (!userValidation.isValid) {
-                return ErrorBuilder.build<number>(
+                return ErrorBuilder.build(
                     ErrorCode.INVALID_ID,
                     userValidation.message!
                 );
@@ -29,7 +30,7 @@ export class PropertyDomainService {
             // Validate property data
             const propertyValidation = this.validateProperty(propertyData);
             if (!propertyValidation.isValid) {
-                return ErrorBuilder.build<number>(
+                return ErrorBuilder.build(
                     ErrorCode.VALIDATION_FAILED,
                     propertyValidation.message!,
                     { validationDetails: propertyValidation.details }
@@ -40,24 +41,20 @@ export class PropertyDomainService {
             const propertyId = await this.propertyRepository.create(propertyData, userId);
             
             if (!propertyId || propertyId <= 0) {
-                return ErrorBuilder.build<number>(
+                return ErrorBuilder.build(
                     ErrorCode.PROPERTY_CREATION_FAILED,
                     "Failed to create property - invalid ID returned"
                 );
             }
 
-            return {
-                success: true,
-                message: "Property created successfully",
-                data: propertyId
-            };
+            return ResponseBuilder.success({propertyId : propertyId} , "Property created successfully")
 
         } catch (error: any) {
             console.error('Error in createProperty:', error);
             
             // Handle specific repository errors
             if (this.isDatabaseError(error)) {
-                return ErrorBuilder.build<number>(
+                return ErrorBuilder.build(
                     ErrorCode.DATABASE_ERROR,
                     "Database error during property creation",
                     { operation: "property creation", originalError: error.message }
@@ -65,14 +62,14 @@ export class PropertyDomainService {
             }
 
             if (this.isTransactionError(error)) {
-                return ErrorBuilder.build<number>(
+                return ErrorBuilder.build(
                     ErrorCode.TRANSACTION_FAILED,
                     "Transaction failed during property creation",
                     { originalError: error.message }
                 );
             }
 
-            return ErrorBuilder.build<number>(
+            return ErrorBuilder.build(
                 ErrorCode.INTERNAL_SERVER_ERROR,
                 "An unexpected error occurred while creating property"
             );

@@ -1,31 +1,33 @@
 export interface CreatePropertyRequest {
-    priceAmount: number;
+  priceAmount: number;
+  bedrooms: number;
+  bathrooms: number;
+  areaSqm: number;
   
-    bedrooms: number;
-    bathrooms: number;
-    areaSqm: number;
+  listingType: string;
+  status: string;
   
-    listingType: string;
-    status: string;
+  availableFrom: string;
   
-    available_from: string;
+  propertyTypeId: number;
+  projectId: number;
   
-    propertyTypeId: number;
-    projectId: number;
+  titleEn: string;
+  titleAr: string;
   
-    titleEn: string;
-    titleAr: string;
+  descriptionEn?: string | null;
+  descriptionAr?: string | null;
   
-    descriptionEn?: string | null;
-    descriptionAr?: string | null;
+  addressEn: string;
+  addressAr: string;
   
-    addressEn: string;
-    addressAr: string;
+  features: number[];
   
-    features:number[];
+  name: string;
+  email: string;
+  phone: string;
   
-    name : string;
-    email : string;
-    phone : string; 
-  }
-  
+  floor: number;
+  totalFloors: number;
+  minTimeToRead: number;
+}

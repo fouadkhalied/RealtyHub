@@ -7,37 +7,42 @@ export const PropertySchema = Joi.object({
   bedrooms: Joi.number().integer().min(0).required(),
   bathrooms: Joi.number().integer().min(0).required(),
   areaSqm: Joi.number().positive().required(),
-
+  
   listingType: Joi.string()
     .valid(...Object.values(ListingType_EN))
     .required(),
-
+  
   status: Joi.string()
     .valid(...Object.values(STATE_EN))
     .required(),
-
-  available_from: Joi.date().iso().required(),
-
+  
+  availableFrom: Joi.date().iso().required(), // Fixed camelCase
+  
   propertyTypeId: Joi.number().integer().positive().required(),
   projectId: Joi.number().integer().positive().required(),
-
+  
   titleEn: Joi.string().max(255).required(),
   titleAr: Joi.string().max(255).required(),
-
-  descriptionEn: Joi.string().max(255).disallow(null).required(),
-  descriptionAr: Joi.string().max(255).disallow(null).required(),
-
+  
+  descriptionEn: Joi.string().max(1000).allow(null).optional(), // Allow null and made optional
+  descriptionAr: Joi.string().max(1000).allow(null).optional(), // Allow null and made optional
+  
   addressEn: Joi.string().max(255).required(),
   addressAr: Joi.string().max(255).required(),
-
+  
   features: Joi.array().items(Joi.number()).required(),
-
-  name : Joi.string().max(50).required(),
+  
+  name: Joi.string().max(50).required(),
   email: Joi.string().max(60).required().custom((value, helpers) => {
     if (!value.includes('@') || !value.includes('.')) {
       return helpers.error('any.invalid');
     }
     return value;
   }, 'Basic email check'),
-  phone : Joi.string().max(20).required(), 
+  phone: Joi.string().max(20).required(),
+  
+  // Added missing fields
+  floor: Joi.number().integer().min(0).required(),
+  totalFloors: Joi.number().integer().min(1).required(),
+  minTimeToRead: Joi.number().integer().min(1).default(5).required(),
 });

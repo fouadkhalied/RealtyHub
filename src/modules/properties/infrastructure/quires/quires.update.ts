@@ -12,16 +12,19 @@ export const UPDATE_QUIRES = {
       RETURNING properties.id, before_update.was_approved
     `,
     updateProperty: `UPDATE properties SET 
-      price_amount = $1,
-      bedrooms = $2,
-      bathrooms = $3,
-      area_sqm = $4,
-      listing_type = $5,
-      status = $6,
-      available_from = $7,
-      property_type_id = $8,
-      project_id = $9
-        WHERE id = $10`,
+  price_amount = $1,
+  bedrooms = $2,
+  bathrooms = $3,
+  area_sqm = $4,
+  listing_type = $5,
+  status = $6,
+  available_from = $7,
+  property_type_id = $8,
+  project_id = $9,
+  floor = $10,
+  total_floors = $11,
+  min_time_to_read = $12
+    WHERE id = $13`,
     updatePropertyTranslations: `
       UPDATE property_translations
       SET title = $2, description = $3, address = $4

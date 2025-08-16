@@ -1,3 +1,4 @@
+import { ResponseBuilder } from "../../../../libs/common/apiResponse/apiResponseBuilder";
 import { ApiResponseInterface } from "../../../../libs/common/apiResponse/interfaces/apiResponse.interface";
 import { ErrorCode } from "../../../../libs/common/errors/enums/basic.error.enum";
 import { ErrorBuilder } from "../../../../libs/common/errors/errorBuilder";
@@ -9,7 +10,7 @@ export class CreatePropertyUseCase {
         private readonly propertyDomainService: PropertyDomainService,
     ) {}
 
-    async execute(props: CreatePropertyRequest, userId: number): Promise<ApiResponseInterface<number>> {
+    async execute(props: CreatePropertyRequest, userId: number): Promise<ApiResponseInterface<{propertyId : number}>> {
         try {
             // Domain logic
             

@@ -1,11 +1,15 @@
 export const WRITE_QUERIES = {
-    createProperty: `
-      INSERT INTO properties (
-        price_amount, bedrooms, bathrooms, area_sqm, listing_type, status,
-        available_from, property_type_id, project_id, user_id
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      RETURNING id
-    `,
+  createProperty: `
+  INSERT INTO properties (
+    price_amount, bedrooms, bathrooms, area_sqm, listing_type, status,
+    available_from, property_type_id, project_id, user_id,
+    floor, total_floors, min_time_to_read
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+    $11, $12, $13
+  )
+  RETURNING id
+`,
     createPropertyTranslations: `
       INSERT INTO property_translations (property_id, language_code, title, description, address)
       VALUES ($1, $2, $3, $4, $5)

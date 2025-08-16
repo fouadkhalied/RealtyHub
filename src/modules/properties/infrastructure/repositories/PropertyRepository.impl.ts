@@ -18,10 +18,11 @@ export class PropertyRepositoryImplementation implements IPropertyRepository {
           await client.sql`BEGIN`;
           
           const result = await client.query(WRITE_QUERIES.createProperty, [
-              data.priceAmount, data.bedrooms, data.bathrooms, data.areaSqm,
-              data.listingType, data.status, data.available_from,
-              data.propertyTypeId, data.projectId, userId
-          ]);
+            data.priceAmount, data.bedrooms, data.bathrooms, data.areaSqm,
+            data.listingType, data.status, data.availableFrom,
+            data.propertyTypeId, data.projectId, userId,
+            data.floor, data.totalFloors, data.minTimeToRead
+        ]);
           
           const propertyId = result.rows[0]?.id;
           if (!propertyId) {
@@ -117,16 +118,17 @@ export class PropertyRepositoryImplementation implements IPropertyRepository {
           const { 
               titleEn, titleAr, descriptionEn, descriptionAr, addressEn, addressAr, 
               features, name, email, phone, priceAmount, bedrooms, bathrooms, 
-              areaSqm, listingType, status, available_from, propertyTypeId, projectId
+              areaSqm, listingType, status,availableFrom, propertyTypeId, projectId, floor, totalFloors, minTimeToRead
           } = props;
 
           await client.sql`BEGIN`;
 
           // Update main property data
           await client.query(UPDATE_QUIRES.updateProperty, [
-              priceAmount, bedrooms, bathrooms, areaSqm, listingType, 
-              status, available_from, propertyTypeId, projectId, id
-          ]);
+            priceAmount, bedrooms, bathrooms, areaSqm, listingType, 
+            status, availableFrom, propertyTypeId, projectId, 
+            floor, totalFloors, minTimeToRead, id  // id moved to end as $13
+        ]);
 
           // Update translations
           await Promise.all([
