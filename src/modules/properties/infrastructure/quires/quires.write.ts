@@ -3,10 +3,10 @@ export const WRITE_QUERIES = {
   INSERT INTO properties (
     price_amount, bedrooms, bathrooms, area_sqm, listing_type, status,
     available_from, property_type_id, project_id, user_id,
-    floor, total_floors, min_time_to_read
+    floor, total_floors
   ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-    $11, $12, $13
+    $11, $12
   )
   RETURNING id
 `,

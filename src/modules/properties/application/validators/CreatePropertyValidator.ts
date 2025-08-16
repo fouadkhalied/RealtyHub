@@ -43,6 +43,5 @@ export const PropertySchema = Joi.object({
   
   // Added missing fields
   floor: Joi.number().integer().min(0).required(),
-  totalFloors: Joi.number().integer().min(1).required(),
-  minTimeToRead: Joi.number().integer().min(1).default(5).required(),
+  totalFloors: Joi.number().integer().min(1).required()
 });

@@ -21,7 +21,7 @@ export class PropertyRepositoryImplementation implements IPropertyRepository {
             data.priceAmount, data.bedrooms, data.bathrooms, data.areaSqm,
             data.listingType, data.status, data.availableFrom,
             data.propertyTypeId, data.projectId, userId,
-            data.floor, data.totalFloors, data.minTimeToRead
+            data.floor, data.totalFloors
         ]);
           
           const propertyId = result.rows[0]?.id;
@@ -118,7 +118,8 @@ export class PropertyRepositoryImplementation implements IPropertyRepository {
           const { 
               titleEn, titleAr, descriptionEn, descriptionAr, addressEn, addressAr, 
               features, name, email, phone, priceAmount, bedrooms, bathrooms, 
-              areaSqm, listingType, status,availableFrom, propertyTypeId, projectId, floor, totalFloors, minTimeToRead
+              areaSqm, listingType, status,availableFrom, propertyTypeId, 
+              projectId, floor, totalFloors
           } = props;
 
           await client.sql`BEGIN`;
@@ -127,7 +128,7 @@ export class PropertyRepositoryImplementation implements IPropertyRepository {
           await client.query(UPDATE_QUIRES.updateProperty, [
             priceAmount, bedrooms, bathrooms, areaSqm, listingType, 
             status, availableFrom, propertyTypeId, projectId, 
-            floor, totalFloors, minTimeToRead, id  // id moved to end as $13
+            floor, totalFloors, id  // id moved to end as $13
         ]);
 
           // Update translations

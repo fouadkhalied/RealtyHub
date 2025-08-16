@@ -22,9 +22,8 @@ export const UPDATE_QUIRES = {
   property_type_id = $8,
   project_id = $9,
   floor = $10,
-  total_floors = $11,
-  min_time_to_read = $12
-    WHERE id = $13`,
+  total_floors = $11
+    WHERE id = $12`,
     updatePropertyTranslations: `
       UPDATE property_translations
       SET title = $2, description = $3, address = $4

@@ -34,7 +34,6 @@ export const READ_QUERIES = {
         p.available_from,
         p.floor,
         p.total_floors,
-        p.min_time_to_read,
         json_build_object(
           'en', json_build_object(
             'title', pt_en.title,
@@ -111,7 +110,6 @@ export const READ_QUERIES = {
         p.available_from,
         p.floor,
         p.total_floors,
-        p.min_time_to_read,
         json_build_object(
           'en', json_build_object(
             'title', pt_en.title,

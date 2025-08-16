@@ -29,5 +29,4 @@ export interface CreatePropertyRequest {
   
   floor: number;
   totalFloors: number;
-  minTimeToRead: number;
 }
