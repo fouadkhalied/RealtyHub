@@ -8,7 +8,8 @@ import { UserRole } from '../src/modules/user/domain/valueObjects/user-role.vo';
 import { createPropertyController } from '../src/modules/properties/composition/createPropertyController';
 import { createAuthController } from '../src/modules/auth/composition/createAuthController';
 import { createPostController } from '../src/modules/blogs/composition/createPostController';
-import { createUserController } from "../src/modules/user/composition/createUserController";
+import { createUserController } from '../src/modules/user/composition/createUserController';
+import { createDashboardController } from '../src/modules/dashboard/composition/createDashboardController';
 
 const app = express();
 app.use(bodyParser.json());
@@ -40,6 +41,7 @@ const authController = createAuthController();
 const UserController = createUserController();
 const propertyController = createPropertyController();
 const postController = createPostController();
+const dashboardController = createDashboardController();
 
 // All Auth Routes
 app.post(
@@ -164,4 +166,7 @@ app.patch(
   (req, res) => postController.updatePart(req as any, res)
 )
 
+// All Dashboard routes
+app.get('/api/dashboard',AuthMiddleware(UserRole.ADMIN), 
+(req,res)=> dashboardController.getDashBoardOverview(req,res))
 export default app;

@@ -36,4 +36,7 @@ export class UserController {
           res.status(ERROR_STATUS_MAP[ErrorCode.INTERNAL_SERVER_ERROR]).json(err);
         }
       }
+
+
+      
 }
