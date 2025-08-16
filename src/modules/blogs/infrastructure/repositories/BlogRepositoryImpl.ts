@@ -27,6 +27,7 @@ async create(postData: CreatePostRequest, adminId: number): Promise<{ id: number
             summaryEn, 
             featuredImageUrl, 
             status, 
+            minTimeToRead,
             ar,
             en
         } = postData;
@@ -35,12 +36,13 @@ async create(postData: CreatePostRequest, adminId: number): Promise<{ id: number
         const postResult = await client.query(WRITE_QUERIES.insertPost, [
             slug, 
             titleAr,
-            titleAr, 
+            titleEn, 
             summaryAr || null,
             summaryEn || null, 
             adminId, 
             featuredImageUrl || null, 
             status || 'draft',
+            minTimeToRead,
             'en' // Default language for backward compatibility
         ]);
         

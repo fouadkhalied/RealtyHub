@@ -13,6 +13,7 @@ export const READ_QUERIES = {
     p.summary_en as "summaryEn",
     p.featured_image_url AS "featuredImageUrl",
     p.status,
+    p.min_time_to_read AS "minTimeToRead",
     json_build_object('id', u.id, 'username', u.username) AS author,
     
     -- Arabic content
@@ -304,6 +305,7 @@ WHERE p.status = 'published' AND p.id = $1;
     p.featured_image_url AS "featuredImageUrl",
     p.status,
     p.language,
+    p.min_time_to_read AS "minTimeToRead",
     json_build_object('id', u.id, 'username', u.username) AS author,
     
     -- Arabic content

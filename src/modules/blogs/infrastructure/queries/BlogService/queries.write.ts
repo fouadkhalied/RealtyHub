@@ -2,9 +2,9 @@ export const WRITE_QUERIES = {
   // Insert main post - Your schema has both old and new columns
   insertPost: `
     INSERT INTO posts (
-      slug, title_ar, title_en, summary_ar, summary_en, author_id, featured_image_url, status, language
+      slug, title_ar, title_en, summary_ar, summary_en, author_id, featured_image_url, status,min_time_to_read, language 
     ) VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9
+      $1, $2, $3, $4, $5, $6, $7, $8, $9 , $10
     ) RETURNING id as post_id;
   `,
 

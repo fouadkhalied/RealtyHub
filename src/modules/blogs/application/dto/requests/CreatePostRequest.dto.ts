@@ -8,7 +8,8 @@ export interface CreatePostRequest {
     summaryEn?: string;
     featuredImageUrl?: string;
     status?: 'draft' | 'published';
-    published_at?: string;
+    publishedAt?: string;
+    minTimeToRead: number;
     ar: {
         contentSections: CreateContentSectionRequest[];
         categories: CreateCategoryRequest[];

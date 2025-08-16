@@ -82,6 +82,8 @@ export const validatePostCreation = Joi.object({
 
   publishedAt: Joi.string().isoDate().optional(),
 
+  minTimeToRead : Joi.number().required(),
+
   ar: Joi.object({
     contentSections: Joi.array().items(
       Joi.object({
