@@ -44,6 +44,7 @@ export const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
     [ErrorCode.TRANSACTION_FAILED]: 500,
     [ErrorCode.TIMEOUT_ERROR]: 504,
     [ErrorCode.SERVER_ERROR]: 500,
+    [ErrorCode.FAILED_TO_SEND_EMAIL]: 503,
     
     // General Errors
     [ErrorCode.UNKNOWN_ERROR]: 500

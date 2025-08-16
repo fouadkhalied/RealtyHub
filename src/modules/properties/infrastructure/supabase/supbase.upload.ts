@@ -1,5 +1,5 @@
 // infrastructure/storage/SupabaseUploader.ts
-import { supabase } from "../../../../infrastructure/supbase/supbase.connect";
+import { supabase } from "../../../../libs/infrastructure/supbase/supbase.connect";
 import { PropertyPhotosInterface } from "../../domain/valueObjects/propertyPhoto.helpers";
 import { IUploader } from "./PhotoUploaderInterface";
 

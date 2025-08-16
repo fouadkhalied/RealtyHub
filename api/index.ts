@@ -7,9 +7,10 @@ import { UserRole } from '../src/modules/user/domain/valueObjects/user-role.vo';
 
 import { createPropertyController } from '../src/modules/properties/composition/createPropertyController';
 import { createAuthController } from '../src/modules/auth/composition/createAuthController';
-import { createPostController } from "../src/modules/blogs/composition/createPostController";
+import { createPostController } from '../src/modules/blogs/composition/createPostController';
+import { createUserController } from "../src/modules/user/composition/createUserController";
 
-const app = express()
+const app = express();
 app.use(bodyParser.json());
 
 app.use(cors({
@@ -35,7 +36,8 @@ const upload = multer({
   }
 })
 
-const authController = createAuthController()
+const authController = createAuthController();
+const UserController = createUserController();
 const propertyController = createPropertyController();
 const postController = createPostController();
 
@@ -54,6 +56,13 @@ app.post(
   '/api/auth/signup/customerService',AuthMiddleware(UserRole.ADMIN),
   (req, res) => authController.registerCustomerService(req,res)
 );
+
+// All User Routes
+
+app.post(
+  '/api/user/submitContactInfo',AuthMiddleware(UserRole.USER),
+  (req,res) => UserController.sendPayloadByEmail(req,res)
+)
 
 // All Property Routes
 app.post(
