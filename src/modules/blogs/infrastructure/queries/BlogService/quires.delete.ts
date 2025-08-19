@@ -1,6 +1,6 @@
 export const DELETE_QUIRES = {
     deleteById: `
-        DELETE FROM posts WHERE id = $1 RETURNS id
+        DELETE FROM posts WHERE id = $1 RETURNING id
     `,
     // Remove post-category relationship
     removePostCategory: `

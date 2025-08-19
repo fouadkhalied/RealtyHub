@@ -166,7 +166,15 @@ app.patch(
   (req, res) => postController.updatePart(req as any, res)
 )
 
+app.delete(
+  '/api/posts/:id',
+  AuthMiddleware(UserRole.ADMIN),
+  (req,res)=> postController.deletePost(req,res)
+)
+
 // All Dashboard routes
 app.get('/api/dashboard',AuthMiddleware(UserRole.ADMIN), 
 (req,res)=> dashboardController.getDashBoardOverview(req,res))
+
+
 export default app;

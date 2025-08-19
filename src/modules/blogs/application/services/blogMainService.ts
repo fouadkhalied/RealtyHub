@@ -33,7 +33,7 @@ export class PostMainService {
       return ResponseBuilder.success({ id }, "Post created successfully");
     } catch (error: any) {
       return ErrorBuilder.build(
-        ErrorCode.INTERNAL_SERVER_ERROR,
+        ErrorCode.DATABASE_ERROR,
         error.message || "Unexpected error"
       );
     }
@@ -56,7 +56,7 @@ export class PostMainService {
       return ResponseBuilder.success(post, "Post retrieved successfully");
     } catch (error: any) {
       return ErrorBuilder.build(
-        ErrorCode.INTERNAL_SERVER_ERROR,
+        ErrorCode.DATABASE_ERROR,
         error.message || "Unexpected error"
       );
     }
@@ -79,7 +79,7 @@ export class PostMainService {
       return ResponseBuilder.success(post, "Posts retrieved successfully");
     } catch (error: any) {
       return ErrorBuilder.build(
-        ErrorCode.INTERNAL_SERVER_ERROR,
+        ErrorCode.DATABASE_ERROR,
         error.message || "Unexpected error"
       );
     }
@@ -98,8 +98,25 @@ export class PostMainService {
       );
     } catch (error: any) {
       return ErrorBuilder.build(
-        ErrorCode.INTERNAL_SERVER_ERROR,
+        ErrorCode.DATABASE_ERROR,
         error.message || "Failed to fetch posts"
+      );
+    }
+  }
+
+  async deletePost(
+    id: number
+  ): Promise<ApiResponseInterface<{message : string}>> {
+    try {
+      
+      await this.blogRepo.deletePost(id);
+
+      return ResponseBuilder.success({message : "Post deleted successfully"});
+      
+    } catch (error: any) {
+      return ErrorBuilder.build(
+        ErrorCode.DATABASE_ERROR,
+        error.message || "Unexpected error"
       );
     }
   }
@@ -119,7 +136,7 @@ export class PostMainService {
       return ResponseBuilder.success(true , "admin verified")
     } catch (error: any) {
       return ErrorBuilder.build(
-        ErrorCode.INTERNAL_SERVER_ERROR,
+        ErrorCode.DATABASE_ERROR,
         error.message || "Failed to fetch posts"
       );
     }
@@ -140,7 +157,7 @@ export class PostMainService {
       const ok = await strategy.execute(id, payload as any,language);
       if (!ok) {
         return ErrorBuilder.build(
-          ErrorCode.INTERNAL_SERVER_ERROR,
+          ErrorCode.DATABASE_ERROR,
           "Update did not modify any records"
         );
       }
@@ -153,7 +170,7 @@ export class PostMainService {
         );
       }
       return ErrorBuilder.build(
-        ErrorCode.INTERNAL_SERVER_ERROR,
+        ErrorCode.DATABASE_ERROR,
         error.message || "Unexpected error"
       );
     }

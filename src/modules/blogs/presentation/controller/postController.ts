@@ -186,21 +186,42 @@ export class PostController {
   //   }
   // }
 
-  // async deletePost(req: Request, res: Response, next: NextFunction): Promise<void> {
-  //   try {
-  //     const id = parseInt(req.params.id);
-  //     await this.postService.deletePost(id);
+  async deletePost(req: Request, res: Response): Promise<void> {
+    try {
+      const id = parseInt(req.params.id, 10);
+  
+      if (isNaN(id)) {
+        res
+          .status(400)
+          .json(
+            ErrorBuilder.build(
+              ErrorCode.VALIDATION_ERROR,
+              "Invalid post ID format",
+              { providedId: req.params.id }
+            )
+          );
+        return;
+      }
+  
+      const serviceResponse = await this.postService.deletePost(id);
+  
+      const statusCode = serviceResponse.success
+        ? 200
+        : serviceResponse.error?.details?.httpStatus || 500;
 
-  //     const response: ApiResponseInterface<null> = {
-  //       success: true,
-  //       message: 'Post deleted successfully'
-  //     };
+      res.status(statusCode).json(serviceResponse);
 
-  //     res.json(response);
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // }
+    } catch (error: any) {
+      res
+        .status(500)
+        .json(
+          ErrorBuilder.build(
+            ErrorCode.INTERNAL_SERVER_ERROR,
+            error.message || "Unexpected error occurred"
+          )
+        );
+    }
+  }
 
   // async publishPost(req: Request, res: Response, next: NextFunction): Promise<void> {
   //   try {
