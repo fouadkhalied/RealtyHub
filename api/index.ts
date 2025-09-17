@@ -19,6 +19,7 @@ app.use(cors({
      ['http://real-estate-eg.vercel.app',
       'https://real-estate-website-nextjs.vercel.app',
       'https://real-estate-website-nextjs-lovat.vercel.app',
+      'http://ajw-ad.net',
       'http://localhost:3000', 
       'http://localhost:3001', 
       'http://localhost:3003', 

@@ -19,20 +19,27 @@ import { IPhotoRepository } from '../domain/repositories/IPhotoRepository';
 import { IUploader } from '../infrastructure/supabase/PhotoUploaderInterface';
 
 export function createPropertyController(): PropertyController {
+    
+    // Repositories
     const propertyRepo : IPropertyRepository = new PropertyRepositoryImplementation();
     const approvalRepo : IPropertyApprovalRepository = new PropertyApprovalRepositoryImplementation();
     const lookupRepo : IPropertyLookupRepository = new PropertyLookupRepositoryImplementation();
     const photoRepo : IPhotoRepository = new PhotoRepositoryImplementation();
+
+    // Uploader
     const uploader : IUploader = new SupabaseUploader();
 
+    // Domain Services
     const propertyDomainService = new PropertyDomainService(propertyRepo);
     const approvalDomainService = new PropertyApprovalDomainService(approvalRepo);
     const lookupDomainService = new PropertyLookupDomainService(lookupRepo);
   
+    // Use Cases
     const createPropertyUseCase = new CreatePropertyUseCase(propertyDomainService);
     const approvalWorkflowUseCase = new PropertyApprovalWorkflowUseCase(approvalDomainService);
     const uploadPhotosUseCase = new UploadPropertyPhotosUseCase(uploader, photoRepo);
   
+    // Application Services
     const appService = new PropertyApplicationService(
       propertyDomainService,
       approvalDomainService,
@@ -41,7 +48,8 @@ export function createPropertyController(): PropertyController {
       approvalWorkflowUseCase,
       uploadPhotosUseCase
     );
-  
+
+    // Controller
     return new PropertyController(appService);
   }
   
